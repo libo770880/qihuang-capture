@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>拍照识别</title>
+<style>
+  :root{--topbar:#123f28;--ink:#17241c;--mut:#5d7067;--line:#dce5e0;--card:#fff;--green:#1d6f4b;--deep:#123f28;--amber:#b9760f;--soft:#e7f1eb;--bg:#f4f7f5;--red:#a53a2e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  .bar{-webkit-app-region:drag;height:42px;background:var(--topbar);color:#e6f1ea;display:flex;align-items:center;padding:0 14px;gap:10px;flex:none}
+  .bar b{font-size:14px}
+  .bar i{font-style:normal;opacity:.75;font-size:12px}
+  .bar .sp{flex:1}
+  .bar button{-webkit-app-region:no-drag;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);color:#e6f1ea;border-radius:6px;width:26px;height:24px;cursor:pointer;font-size:12px;line-height:1}
+  .bar button:hover{background:rgba(255,255,255,.26)}
+  .wrap{flex:1;display:flex;flex-direction:column;padding:10px 12px;gap:8px;min-height:0}
+  .hint{color:var(--mut);font-size:12px}
+  .hint b{color:var(--green)}
+  .view{flex:1;min-height:0;position:relative;border:1px solid var(--line);border-radius:10px;background:#101510;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .view video,.view img.snap{max-width:100%;max-height:100%;display:none}
+  .view.live video{display:block}
+  .view.frozen img.snap{display:block}
+  .view .camerr{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#9aa794;font-size:12.5px;text-align:center;padding:0 24px;line-height:1.8}
+  .view .camerr.show{display:flex}
+  .view .camerr b{color:#c9d3c2}
+  .rec{position:absolute;left:10px;top:10px;display:none;align-items:center;gap:6px;background:rgba(0,0,0,.45);color:#fff;font-size:11.5px;border-radius:12px;padding:3px 10px}
+  .rec .dot{width:8px;height:8px;border-radius:50%;background:#ff5f4e;animation:blink 1.2s ease infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .view.live .rec{display:flex}
+  .btns{flex:none;display:flex;gap:8px;align-items:center}
+  .btn{border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);padding:9px 18px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s}
+  .btn:hover{background:var(--soft);border-color:#c4cfa8}
+  .btn.primary{background:var(--green);border-color:var(--green);color:#e6f1ea}
+  .btn.primary:hover{background:var(--deep)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn .sub{font-weight:400;font-size:11px;opacity:.75;margin-left:4px}
+  .status{flex:none;min-height:18px;font-size:12px;color:var(--red)}
+  .status.ok{color:var(--green)}
+  input[type=file]{display:none}
+</style>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+  <div class="bar"><b>📷 拍照识别</b><i>摄像头拍照或导入纸质处方照片 → 高精度识别 → 填入粘贴框</i><span class="sp"></span><button onclick="window.close()" title="关闭">✕</button></div>
+  <div class="wrap">
+    <div class="hint">对准<b>纸质处方/病历</b>拍照，或导入手机拍摄的照片；光线充足、文字清晰、避免反光效果最好。</div>
+    <div class="view live" id="view">
+      <video id="video" autoplay playsinline muted></video>
+      <img class="snap" id="snap" alt="">
+      <div class="rec"><span class="dot"></span>摄像头取景中</div>
+      <div class="camerr" id="camerr"></div>
+    </div>
+    <div class="btns">
+      <button class="btn primary" id="btnShot" onclick="shot()">📷 拍照</button>
+      <button class="btn" onclick="pickFile()">📁 从文件选择…</button>
+      <button class="btn" id="btnRetake" onclick="retake()" style="display:none">↻ 重拍</button>
+      <button class="btn primary" id="btnOcr" onclick="doOcr()" style="display:none">🔍 识别此图</button>
+      <span class="sp" style="flex:1"></span>
+      <span class="status" id="st"></span>
+    </div>
+    <input type="file" id="file" accept="image/*" onchange="onFile(this)">
+  </div>
+<script>
+  const video = document.getElementById('video');
+  const snap  = document.getElementById('snap');
+  const view  = document.getElementById('view');
+  const st    = document.getElementById('st');
+  let stream = null, frozenData = null, busy = false;
+
+  function say(msg, ok){ st.textContent = msg || ''; st.className = 'status' + (ok ? ' ok' : ''); }
+
+  // ---------- 摄像头 ----------
+  async function startCam(){
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({ video: { width:{ideal:2560}, height:{ideal:1440} }, audio:false });
+      video.srcObject = stream;
+      document.getElementById('camerr').classList.remove('show');
+    }catch(e){
+      const box = document.getElementById('camerr');
+      box.innerHTML = '<b>摄像头不可用</b>（' + (e.name === 'NotAllowedError' ? '权限被拒绝' : e.name === 'NotFoundError' ? '未检测到摄像头设备' : e.message) + '）<br>可改用「📁 从文件选择…」导入手机拍好的处方照片';
+      box.classList.add('show');
+      view.classList.remove('live');
+    }
+  }
+  function stopCam(){
+    if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+  }
+
+  // ---------- 拍照 / 冻结确认 ----------
+  function shot(){
+    if (busy) return;
+    if (!stream || !video.videoWidth){ say('摄像头未就绪，请稍候或改用「从文件选择」'); return; }
+    const c = document.createElement('canvas');
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext('2d').drawImage(video, 0, 0);
+    showFrozen(c.toDataURL('image/png'), '拍照完成：确认清晰后点「识别此图」，或重拍');
+  }
+  function showFrozen(dataUrl, msg){
+    frozenData = dataUrl;
+    snap.src = dataUrl;
+    view.classList.remove('live'); view.classList.add('frozen');
+    document.getElementById('btnShot').style.display = 'none';
+    document.getElementById('btnRetake').style.display = '';
+    document.getElementById('btnOcr').style.display = '';
+    say(msg, true);
+  }
+  function retake(){
+    frozenData = null; snap.src = '';
+    view.classList.add('live'); view.classList.remove('frozen');
+    document.getElementById('btnShot').style.display = '';
+    document.getElementById('btnRetake').style.display = 'none';
+    document.getElementById('btnOcr').style.display = 'none';
+    say('');
+    if (!stream) startCam();
+  }
+
+  // ---------- 文件导入 ----------
+  function pickFile(){ if (!busy) document.getElementById('file').click(); }
+  function onFile(input){
+    const f = input.files && input.files[0];
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => showFrozen(String(rd.result), '已载入图片（' + Math.round(f.size/1024) + ' KB）：确认后点「识别此图」');
+    rd.onerror = () => say('读取图片失败');
+    rd.readAsDataURL(f);
+    input.value = '';
+  }
+
+  // ---------- 识别 ----------
+  async function doOcr(){
+    if (busy || !frozenData) return;
+    busy = true;
+    document.getElementById('btnOcr').disabled = true;
+    document.getElementById('btnRetake').disabled = true;
+    say('识别中…（完成后本窗口自动关闭，结果填入粘贴框）', true);
+    try{
+      const r = await window.qhjf.photoSubmit(frozenData);
+      if (r && r.ok){ return; } // 主进程会关闭本窗口
+      say('识别失败：' + ((r && r.error) || '未知错误'));
+    }catch(e){ say('识别失败：' + e.message); }
+    busy = false;
+    document.getElementById('btnOcr').disabled = false;
+    document.getElementById('btnRetake').disabled = false;
+  }
+
+  startCam();
+  window.addEventListener('beforeunload', stopCam);
+</script>
+</body>
+</html>

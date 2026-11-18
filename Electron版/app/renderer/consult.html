@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>岐黄鉴方 · 辨证咨询</title>
+<style>
+  :root{--topbar:#123f28;--ink:#17241c;--mut:#5d7067;--line:#dce5e0;--card:#fff;--green:#1d6f4b;--deep:#123f28;--amber:#b9760f;--blue:#2c6ca8;--bg:#f4f7f5}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);font-size:13px;height:100vh;overflow:hidden}
+  .top{height:50px;background:var(--topbar);color:#eef6e8;display:flex;align-items:center;padding:0 18px;gap:10px;flex:none}
+  .top .t1{font-family:KaiTi,serif;font-size:18px;letter-spacing:1px}
+  .top .t2{font-size:11px;opacity:.78}
+  .top .sp{flex:1}
+  .top button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);color:#eef6e8;border-radius:7px;padding:4px 12px;font-size:12px;cursor:pointer}
+  .top button:hover{background:rgba(255,255,255,.25)}
+  .wrap{display:flex;flex-direction:column;height:calc(100vh - 50px);padding:12px 16px;gap:10px}
+  .selrow{display:flex;gap:10px;flex:1;min-height:0}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#c9c3ad;border-radius:5px;border:2px solid #fbf9f1}
+  ::-webkit-scrollbar-thumb:hover{background:#aca588}
+  ::-webkit-scrollbar-track{background:transparent}
+  .cbody{scrollbar-width:thin}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-width:0}
+  .c1{flex:1.1}.c2{flex:1}.c3{flex:1.3}
+  .chd{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);flex:none}
+  .chd .tt{font-size:12.5px;font-weight:700;color:var(--deep)}
+  .chd .sub{font-size:10px;color:#93a49a}
+  .chd input{flex:1;min-width:40px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12px;outline:none;background:#fafcfb}
+  .cbody{overflow-y:auto;padding:8px;flex:1;min-height:0}
+  .diagrow{padding:6px 10px;border-radius:7px;cursor:pointer;font-size:12.5px;display:flex;align-items:center;gap:6px}
+  .diagrow:hover{background:#eef4e4}
+  .diagrow.on{background:var(--soft, #e7f1eb);box-shadow:inset 2px 0 0 var(--green);font-weight:600;color:var(--green)}
+  .diagrow .ct{font-size:10px;color:#93a49a;margin-left:auto}
+  .chip{display:inline-block;font-size:12px;padding:3px 10px;border-radius:12px;margin:3px;cursor:pointer;border:1px solid #d3dcc6;background:#f2f5ea;color:#33432e;line-height:16px}
+  .chip:hover{border-color:#9fc0a0}
+  .chip.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:600}
+  .chip.west{border-color:#cfddf0;background:#edf3fa;color:#2c6ca8}
+  .chip.west.on{background:#2c6ca8;border-color:#2c6ca8;color:#fff}
+  .chip.syn.on{background:#b9760f;border-color:#b9760f;color:#fff}
+  .hint{font-size:10.5px;color:#93a49a;padding:4px 10px}
+  .grp{margin:2px 0 5px}
+  .grph{display:flex;align-items:center;gap:5px;padding:4px 9px;font-size:11px;font-weight:700;color:var(--deep);background:#efecdd;border-radius:6px;cursor:pointer;user-select:none;position:sticky;top:-8px;z-index:1}
+  .grph:hover{background:#e7e3d0}
+  .grph .arr{font-size:8.5px;color:#93a49a;transition:transform .15s}
+  .grp.closed .arr{transform:rotate(-90deg)}
+  .grpb{display:flex;flex-wrap:wrap;padding:3px 2px}
+  .grp.closed .grpb{display:none}
+  .grph .cnt{margin-left:auto;font-weight:400;color:#93a49a}
+  .chip.rel{border-color:#d9ba7c;background:#faf3df;color:#7a5a17}
+  .chip.rel.on{background:#b9760f;border-color:#b9760f;color:#fff}
+  .bar{display:flex;align-items:center;gap:10px;flex:none}
+  .bar .cur{font-size:12px;color:var(--mut);display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
+  .bar .tag2{background:#e7f1eb;border:1px solid #d6dfc6;border-radius:10px;padding:1px 9px;font-size:11.5px;color:#33432e}
+  .bar .tag2 b{color:var(--green)}
+  .bar .go{background:var(--green);color:#fff;border:0;border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;font-weight:600;letter-spacing:.5px}
+  .bar .go:hover{filter:brightness(1.1)}
+  .bar .go:disabled{opacity:.5;cursor:not-allowed}
+  .bar .go2{background:#6a5cb0;color:#fff;border:0;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600;letter-spacing:.5px}
+  .bar .go2:hover{filter:brightness(1.12)}
+  .bar .go2:disabled{opacity:.5;cursor:not-allowed}
+  /* 截图带入条 */
+  .ctxin{display:flex;align-items:center;gap:8px;padding:6px 12px;background:#eef4f1;border:1px solid #cfe0da;border-radius:9px;font-size:12px;color:#245a4a;flex-wrap:wrap}
+  .ctxin .ctxb{font-weight:700;color:#17455f}
+  .ctxin .ctxm{color:#5a7a72;font-size:11px;flex:1;min-width:120px}
+  .ctxin button{background:#fff;border:1px solid #b8d2cb;color:#245a4a;border-radius:6px;padding:2px 10px;font-size:11px;cursor:pointer}
+  .ctxin button:hover{border-color:#7fa89e}
+  #ctxText{background:#fbfaf4;border:1px solid #dce5e0;border-radius:8px;padding:10px 14px;font-size:12px;line-height:1.9;color:#3a4438;max-height:150px;overflow:auto;white-space:pre-wrap;word-break:break-all;margin-top:2px}
+  .ctxsx{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:3px;padding:6px 10px;background:#f4f8f3;border:1px dashed #cfe0da;border-radius:8px}
+  .ctxsx .chip{font-size:11px;padding:2px 9px;cursor:pointer}
+  .ctxsx .ctxa{font-size:10.5px;color:#2f6d8f;border:1px solid #b8d2cb;background:#fff;border-radius:6px;padding:2px 8px;cursor:pointer;white-space:nowrap}
+  .bar .clr{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:8px;padding:7px 13px;font-size:12px;cursor:pointer}
+  .res{flex:none;max-height:120px;overflow-y:auto}
+  .res:empty{display:none}
+  .msg{padding:8px 14px;background:#fdf8ea;border:1px solid #f0dcb0;border-radius:8px;color:#7a6426;font-size:12.5px;line-height:1.8}
+  /* AI 分析进度条（与 panel.html / ai.html 同款，配色随本页绿色主题） */
+  .aprog{padding:10px 14px;background:var(--card);border:1px solid #cfe0f2;border-radius:10px;margin:8px 0}
+  .aprog .ahd{display:flex;align-items:baseline;gap:8px;font-size:12.5px;color:var(--deep)}
+  .aprog .ahd .lb{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .aprog .ahd .pc{font-size:14px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums}
+  .aprog .tk{height:10px;border-radius:6px;background:#e7ece0;border:1px solid #d5ddc9;overflow:hidden;margin:9px 0 6px;position:relative}
+  .aprog .br{height:100%;border-radius:6px;background:var(--green);position:relative;transition:width .5s cubic-bezier(.2,.7,.3,1)}
+  .aprog .br::after{content:"";position:absolute;inset:0;border-radius:6px;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.6) 50%,transparent 75%);background-size:220% 100%;animation:capshine 1.5s linear infinite}
+  .aprog .afl{font-size:10.5px;color:var(--mut);line-height:1.7}
+  .aprog .afl b{color:var(--green);font-variant-numeric:tabular-nums}
+  @keyframes capshine{from{background-position:120% 0}to{background-position:-120% 0}}
+  .fcard{border:1px solid #dcd5c0;border-radius:10px;background:var(--card);margin:8px 0;overflow:hidden}
+  .fhd{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--soft);border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .fn{font-family:KaiTi,serif;font-size:16px;font-weight:700;color:var(--deep)}
+  .fo{font-size:11px;color:#8a6a15;background:#faf0cf;border-radius:4px;padding:0 6px;line-height:17px}
+  .bdg{font-size:10px;border-radius:4px;padding:1px 7px}
+  .bdg.top{background:#5f3fa0;color:#fff;font-weight:600}
+  .bdg.ok{background:#e2f2e4;color:#16674a}
+  .bdg.near{background:#fbf2d9;color:#94650f}
+  .frows{padding:6px 14px 10px}
+  .fr{display:flex;gap:10px;font-size:12.5px;line-height:1.8;color:#2c3830}
+  .fr .flb{flex:none;width:36px;color:var(--amber);font-weight:600}
+  /* 组成逐味药块 */
+  .cing{display:flex;flex-wrap:wrap;gap:4px 6px}
+  .cing .ci{display:inline-flex;align-items:baseline;gap:3px;background:#f4f1e2;border:1px solid #dfe8e2;border-radius:6px;padding:1px 7px;line-height:1.5}
+  .cing .ci .cn{font-weight:600;color:#33402f}
+  .cing .ci .cd{font-size:10.5px;color:#8a6a15}
+  .cing .ci .cx{font-size:10.5px;color:#849590;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cing .ci .cfx{font-size:9px;color:#fff;background:#c53f33;border-radius:4px;padding:0 3px;margin-left:2px;cursor:help;flex:none;align-self:center}
+  .cing .ci.na{background:#f6f5ef;border-style:dashed}
+  .cing .ci.has{cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+  .cing .ci.has:hover{background:#fff8e1;border-color:#d9b96a;box-shadow:0 1px 4px rgba(160,130,50,.18)}
+  /* 单味药详情弹窗 */
+  .hmask{position:fixed;inset:0;background:rgba(40,38,30,.42);z-index:998;display:flex;align-items:center;justify-content:center}
+  .hmodal{background:#fffdf6;border:1px solid #d8e2db;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.25);width:330px;max-width:92%;max-height:76%;overflow:auto}
+  .hmodal .hmh{display:flex;align-items:center;gap:7px;padding:9px 13px;border-bottom:1px solid #eef4f1;background:#eef4f1;position:sticky;top:0;z-index:1}
+  .hmodal .hmh .hmt{font-size:14px;font-weight:700;color:#33402f}
+  .hmodal .hmh .hmx{margin-left:auto;cursor:pointer;color:#93a49a;font-size:15px;padding:0 3px;line-height:1;user-select:none}
+  .hmodal .hmh .hmx:hover{color:#6b6d5c}
+  .hmodal .hmb{padding:9px 13px 12px}
+  .hmodal .hmr{display:flex;padding:3px 0;font-size:11px;line-height:1.55;border-bottom:1px dashed #eef4f1}
+  .hmodal .hmr:last-child{border-bottom:0}
+  .hmodal .hmr .hml{flex:0 0 52px;color:#93a49a}
+  .hmodal .hmr .hmv{flex:1;color:#2c3830}
+  .hmodal .hmv .htox,.hmodal .hmv .hpreg{font-size:9.5px;border-radius:4px;padding:0 5px;margin-right:4px}
+  .hmodal .hmv .htox{background:#fdeceb;color:#bf3a2f;border:1px solid #f5cac5}
+  /* 医保支付类别徽章 */
+  .yb-pill{display:inline-block;font-size:9.5px;border-radius:4px;padding:0 5px;font-weight:600;vertical-align:middle;margin-right:4px}
+  .yb-jia{background:#e8f3e4;color:#2e7d32;border:1px solid #c4e2bd}
+  .yb-yi{background:#faf3e0;color:#8f5c0c;border:1px solid #f0dcb0}
+  .yb-zf{background:#fdeceb;color:#bf3a2f;border:1px solid #f3c8c3}
+  .hmodal .hmv .hpreg{background:#fdeff0;color:#a03a5e;border:1px solid #f7c8d5}
+  .fr .flb{flex:none;width:34px;color:var(--amber);font-weight:600}
+  .note2{margin:6px 14px;font-size:11.5px;color:#8a6a15;background:#fdf8ec;border-left:3px solid #e0b64a;border-radius:5px;padding:5px 10px;line-height:1.7}
+  .disclaimer{font-size:10.5px;color:#93a49a;text-align:center;padding:6px 0 2px}
+  .aibox{border:1px solid #cfe0f2;border-radius:10px;background:var(--card);margin:8px 0;padding:12px 16px;font-size:12.8px;line-height:1.9;color:#2c3a4a;white-space:normal}
+  .airefs{font-size:11px;color:#5a7ba6;background:#f2f6fb;border-radius:6px;padding:4px 10px;margin:6px 0}
+  .aibox h3,.aibox h4,.aibox h5{margin:8px 0 3px;color:var(--deep)}
+  .aibox h3{font-size:13.5px;border-left:3px solid #6a8fbe;padding-left:8px}
+  .aibox h4{font-size:12.5px}.aibox h5{font-size:12px}
+  .aibox p{margin:4px 0}
+  .aibox ul,.aibox ol{margin:4px 0;padding-left:22px}
+  .aibox code{background:#e5ede9;border-radius:4px;padding:0 5px;color:#1d6f4b;font-size:12px;font-family:Consolas,monospace}
+  .aibox pre{background:#f2f4e8;border:1px solid #e5ede9;border-radius:7px;padding:8px 11px;font-size:12px;overflow-x:auto;margin:6px 0}
+  .aibox blockquote{color:var(--mut);border-left:3px solid #d3ded8;padding-left:9px;margin:5px 0;font-size:12px}
+  .aibox .md-table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;line-height:1.6}
+  .aibox .md-table th,.aibox .md-table td{border:1px solid #dae2db;padding:4px 8px;text-align:left;vertical-align:top}
+  .aibox .md-table th{background:#eceef7;font-weight:600;color:#2c3a6a;white-space:nowrap}
+  .aibox .md-table tr:nth-child(even) td{background:#f6f7fb}
+  .ainline{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#4a4f9c;background:#f0f1fa;border:1px solid #cfd2ee;border-radius:7px;padding:6px 14px;cursor:pointer;font-weight:600;margin-top:8px}
+  .ainline:hover{background:#e5e7f7}
+  /* 分析结果弹窗（本地分析 / AI 分析点击后弹出） */
+  .rmask{position:fixed;inset:0;background:rgba(30,40,35,.45);z-index:997;display:flex;align-items:center;justify-content:center}
+  .rmodal{background:#fbf9f1;border:1px solid #d8d2bc;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.3);width:880px;max-width:94%;height:82%;display:flex;flex-direction:column;overflow:hidden}
+  .rmh{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--topbar);color:#eef6e8;flex:none}
+  .rmh .rt1{font-family:KaiTi,serif;font-size:15.5px;font-weight:700;letter-spacing:1px}
+  .rmh .rt2{font-size:11px;opacity:.78;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rmh .rmx{cursor:pointer;font-size:16px;padding:0 4px;line-height:1;user-select:none;opacity:.85}
+  .rmh .rmx:hover{opacity:1}
+  .rmb{flex:1;overflow-y:auto;padding:12px 16px}
+  /* 西医诊断匹配联想 */
+  .whits{display:flex;flex-wrap:wrap;gap:4px;padding:5px 8px 2px;border-bottom:1px solid var(--line);flex:none}
+  .whits:empty{display:none}
+  .wchip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 9px;border-radius:11px;border:1px solid #cfddf0;background:#edf3fa;color:#2c6ca8;cursor:pointer}
+  .wchip:hover{border-color:#8fb4dd;background:#e2edf9}
+  .wchip b{font-weight:700}
+  .wchip .wm{font-size:9px;background:#1d6f4b;color:#fff;border-radius:3px;padding:0 4px}
+  .wm2{font-size:9px;background:#1d6f4b;color:#fff;border-radius:3px;padding:0 4px;flex:none}
+</style>
+<style id="flatTheme">
+/* ===== 扁平主题（红蓝）覆盖：与主面板同语言 ===== */
+html.flat{--ink:#1f2937;--mut:#64748b;--line:#e3e9f2;--card:#fff;--green:#2563eb;--deep:#154a94;--amber:#b45309;--soft:#eff5fe;--bg:#f4f6fa;color-scheme:light}
+html.flat ::-webkit-scrollbar-thumb{background:#c7d2e2;border-radius:5px}
+html.flat .top,html.flat .rmh{background:#2563eb}
+html.flat .bar .go{background:#2563eb}
+html.flat .bar .go2{background:#bf3a2f}
+html.flat .ctxin{background:#eef3fb;border-color:#c9ddf9;color:#2563eb}
+html.flat .ctxin .ctxb{color:#154a94}
+html.flat .ctxsx{background:#f0f5fd;border-color:#c9ddf9}
+html.flat #ctxText{background:#fff;border-color:#e3e9f2}
+html.flat .fhd{background:#f7fafc}
+html.flat .aibox code{background:#eff5fe;color:#2563eb}
+html.flat .wchip .wm,html.flat .wm2{background:#2563eb}
+html.flat .hmodal{background:#fff;border-color:#e3e9f2}
+html.flat .hmodal .hhd .ht,html.flat .hmodal .dh .dn{color:#154a94}
+html.flat .hmodal .dcard{border-color:#e3e9f2}
+html.flat .fcard{border-color:#e3e9f2}
+</style>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<div class="top">
+  <span class="t1">岐黄鉴方</span><span class="t2">· 辨证咨询（未截图也能辨证）</span>
+  <div class="sp"></div>
+  <button onclick="reload()">↻ 刷新数据</button>
+</div>
+<div class="wrap">
+  <div id="ctxStrip"></div>
+  <div class="selrow">
+    <div class="card c1">
+      <div class="chd"><span class="tt">① 诊断（可搜）</span></div>
+      <div class="chd" style="border-bottom:0;padding-top:4px"><input id="qWest" placeholder="输入西医诊断 → 匹配中医诊断（如 2型糖尿病）" oninput="westMatch()"></div>
+      <div class="whits" id="westHits"></div>
+      <div class="chd" style="border-bottom:0;padding-top:4px"><input id="qDiag" placeholder="输入病名过滤…" oninput="dDiag()"></div>
+      <div class="cbody" id="diagBody"></div>
+    </div>
+    <div class="card c2">
+      <div class="chd"><span class="tt">② 证型</span><span class="sub" id="syndSrc"></span></div>
+      <div class="cbody" id="syndBody"></div>
+    </div>
+    <div class="card c3">
+      <div class="chd"><span class="tt">③ 症状（多选，辅助辨证）</span></div>
+      <div class="chd" style="border-bottom:0;padding-top:4px"><input id="qSx" placeholder="输入症状过滤…" oninput="dSx()"></div>
+      <div class="cbody" id="sxBody"></div>
+    </div>
+  </div>
+  <div class="bar">
+    <div class="cur" id="selCur"></div>
+    <button class="clr" onclick="clearAll()">清空</button>
+    <button class="go2" id="aiBtn" onclick="aiAsk()" disabled title="直接调用云端大模型分析（结合本地知识库检索）">AI 分析</button>
+    <button class="go" id="goBtn" onclick="analyze()">本地分析</button>
+  </div>
+  <div class="res" id="res"></div>
+  <div class="disclaimer">本工具输出仅供学习与临床参考，实际处方须经执业医师辨证审定。</div>
+</div>
+<script src="../node_modules/pinyin-pro/dist/index.js"></script>
+<script src="md.js"></script>
+<script src="review-bar.js"></script>
+<script>
+const api = window.qhjf;
+// 主题跟随：与主面板共用 localStorage（扁平红蓝 / 其余亮色）
+if(localStorage.getItem('qhjf.theme')==='flat') document.documentElement.classList.add('flat');
+let D = { diagnoses: [], symptoms: [], syndromeRows: [], formulas: [] };
+let sel = { west: '', diag: null, synd: null, sxs: [] }; // 西医诊断 / 诊断名 / 证型名 / 症状名集合
+
+// 截图带入上下文（来自记录面板「脉 辨证咨询」）——只带入不自动分析
+let ctx = null, ctxTxtOpen = false, ctxApplied = false;
+function srcName(s){ return s==='window'?'整窗截图':s==='region'?'框选截图':s==='uia'?'界面文本':String(s||''); }
+function fmtTs(t){ try{ return new Date(t).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}); }catch(e){ return ''; } }
+
+// ===== 人工复核条：带记录进入时（ctx.id）可直接在分析结果弹窗里裁定 =====
+// 实现与记录面板详情区共用 renderer/review-bar.js（同一份 CSS/HTML/落库流程），
+// 裁定写回同一条记录的 review 字段 → 记录面板侧栏「已存档 / 已驳回」同步生效。
+let rvRec = null;                       // ctx.id 对应的那条完整记录（含 compliance / tcm / review）
+async function rvLoad(force){
+  const id = ctx && ctx.id;
+  if(!id){ rvRec = null; return; }
+  if(!force && rvRec && rvRec.id===id) return;   // 同一条记录不重复拉
+  rvRec = null;
+  if(!api.getRecord) return;
+  try{ const r = await api.getRecord(id); if(r && r.id===id && ctx && ctx.id===id) rvRec = r; }catch(e){ rvRec = null; }
+}
+ReviewBar.mount({
+  get: ()=>rvRec,
+  patch: (id,patch)=>api.patchRecord(id,patch),
+  toast,
+  applied: (id,rv)=>{ if(rvRec && rvRec.id===id){ rvRec.review = rv; } },
+  rerender: rvRerender
+});
+// ===== 带入内容识别引擎：全文去空白后匹配（OCR 断行/空格不影响命中） =====
+let _ctxNorm = null;
+function ctxNormText(){
+  if(_ctxNorm === null) _ctxNorm = String(ctx && ctx.text || '').replace(/\s+/g,'');
+  return _ctxNorm;
+}
+function ctxDiagHits(){ // 诊断命中（长名优先，最多6个）
+  const t=ctxNormText(); if(!t) return [];
+  const seen=new Set(), out=[];
+  [...D.diagnoses].sort((a,b)=>(b.name||'').length-(a.name||'').length).forEach(d=>{
+    if(d.name && t.includes(d.name) && !seen.has(d.name)){ seen.add(d.name); out.push(d); }
+  });
+  return out.slice(0,6);
+}
+function ctxSyndHit(){ // 证型命中 → {diag, synd}；优先归属当前/命中诊断，长证型名优先
+  const t=ctxNormText(); if(!t) return null;
+  const diagHits=ctxDiagHits();
+  const pool=[];
+  D.diagnoses.forEach(d=>(d.syndromes||[]).forEach(s=>{ const n=typeof s==='string'?s:(s&&s.name); if(n) pool.push({diag:d.name, synd:n}); }));
+  D.syndromeRows.forEach(r=>{ if(r&&r.name) pool.push({diag:null, synd:r.name}); });
+  const prefer = sel.diag || (diagHits[0]&&diagHits[0].name) || null;
+  pool.sort((a,b)=>((a.diag===prefer?-1:1)-(b.diag===prefer?-1:1)) || (b.synd.length-a.synd.length));
+  for(const p of pool){ if(t.includes(p.synd)) return p; }
+  return null;
+}
+function ctxSxHits(){ // 症状命中：长词优先，已被长词覆盖的短词跳过，最多12项
+  const t=ctxNormText(); if(!t) return [];
+  const picked=[];
+  [...D.symptoms].sort((a,b)=>(b.name||'').length-(a.name||'').length).forEach(x=>{
+    if(x.name && x.name.length>=2 && t.includes(x.name) && !picked.some(p=>p.name.includes(x.name))) picked.push(x);
+  });
+  return picked.slice(0,12);
+}
+// 诊断名噪声词：HIS 划费/医保页面常把「诊断：卵巢囊肿职工医保(职工)总费用：9996.03入院时间：2026」连成一行，
+// 病名后粘着 医保类别/费用/时间 等非诊断字段，提取时须截断排除（如排除"职工医保"字样 → 卵巢囊肿）
+const DIAG_NOISE_RE = /(职工医保|居民医保|新农合|医保|总费用|自费|公费|费别|床号|住院号|门诊号|入院时间|出院时间|登记号|退休|在职|职工|居民|慢病|金额)/;
+function cleanDiagNoise(v){
+  let s=String(v||'').trim();
+  const m=s.match(DIAG_NOISE_RE);
+  if(m){ if(m.index===0) return ''; s=s.slice(0,m.index).trim(); } // 打头即整段非诊断，不保留
+  return s.replace(/^[^\u4e00-\u9fa5A-Za-z0-9]+|[^\u4e00-\u9fa5A-Za-z0-9]+$/g,'');
+}
+// 诊断库纠错：清洗后的名字优先精确命中诊断库；否则取库名被其包含的最长病名
+// （如「卵巢囊肿肿瘤」→ 库内「卵巢囊肿」），做到按诊断库归一，避免同病异名插重
+function diagLibFix(name){
+  const s=String(name||'').trim(); if(!s) return '';
+  if(D.diagnoses.some(d=>d.name===s)) return s;
+  let best='';
+  D.diagnoses.forEach(d=>{ if(d.name && s.includes(d.name) && d.name.length>best.length) best=d.name; });
+  return best||s;
+}
+function ctxRawDiags(){ // 从原文解析「诊断：X / 中医诊断：X」字段（含库外名），最多3个
+  const t=String(ctx && ctx.text || ''); if(!t) return [];
+  const out=[], seen=new Set();
+  const re=/(?:中医诊断|诊断)\s*[：:]\s*([^，,。\n；;（(]{1,20})/g;
+  let m;
+  while((m=re.exec(t))){
+    let v=m[1].replace(/^[：:\s]+/,'').trim();
+    v=v.replace(/^(?:中医|西医)[：:]/,'').trim();          // 「诊断：中医：眩晕」→ 眩晕
+    v=v.replace(/^\d+[.、]\s*/,'');                        // 「入院诊断：1.乳岩 2.糖尿病」→ 去编号
+    const cut=v.match(/\s*\d+[.、]/); if(cut) v=v.slice(0,cut.index).trim(); // 截断编号列表后续项
+    v=diagLibFix(cleanDiagNoise(v));                       // 去医保/费用噪声 + 按诊断库纠错归一
+    if(v && v.length>=2 && !seen.has(v)){ seen.add(v); out.push(v); }
+  }
+  return out.slice(0,3);
+}
+function ctxOutOfLibDiags(){ // 原文提到但辨证库未收录的诊断
+  const names=new Set(D.diagnoses.map(d=>d.name));
+  return ctxRawDiags().filter(n=>!names.has(n));
+}
+async function insertDiag(name){ // 库外诊断一键插入诊断库（clinicalkb 诊断库，非方剂库），并带入选择
+  try{
+    const r=await api.clinicalUpsert('diag', { name, cat:'未分类', syndromes:[], note:'采集识别插入' });
+    if(r && r.ok===false) throw new Error(r.error||'写入失败');
+    await reload();
+    if(sel.diag!==name) pickDiag(name);
+    toast('已插入诊断「'+name+'」→ 未分类；可在后台为其补录分型');
+  }catch(e){ toast('插入失败：'+e.message); }
+}
+function revealPickedDiag(){ // 诊断树定位：展开所选所在分组并滚动到可见
+  requestAnimationFrame(()=>{
+    const on=document.querySelector('#diagBody .diagrow.on');
+    if(!on) return;
+    const grp=on.closest('.grp');
+    if(grp && grp.classList.contains('closed')) grp.classList.remove('closed');
+    on.scrollIntoView({block:'center', behavior:'smooth'});
+  });
+}
+function ctxPickSx(name){ pickSx(name); applyCtx(ctx); } // 带入条症状 chip 勾选（联动刷新）
+function ctxSxAll(on){ // 一键勾选/取消全部识别症状
+  ctxSxHits().forEach(x=>{
+    const i=sel.sxs.indexOf(x.name);
+    if(on && i<0) sel.sxs.push(x.name);
+    if(!on && i>=0) sel.sxs.splice(i,1);
+  });
+  renderSx(); renderSynd(); syncCur(); applyCtx(ctx);
+}
+function applyCtx(c){
+  ctx = c || null; _ctxNorm = null; ctxTxtOpen = false;
+  rvLoad();   // 带入/换记录时重新取一次记录（人工复核条依赖它的 compliance/tcm/review）
+  const strip=document.getElementById('ctxStrip');
+  if(!strip) return;
+  if(!ctx){ strip.innerHTML=''; return; }
+  const hits=ctxDiagHits(), sh=ctxSyndHit(), sxs=ctxSxHits(), ood=ctxOutOfLibDiags();
+  const hitTxt =
+    (hits.length ? ' · 已带入诊断 '+hits.slice(0,3).map(h=>h.name).join('/') : '') +
+    (sh && !hits.length ? ' · 识别证型 '+sh.synd : '') +
+    (ood.length ? ' · 库外诊断 '+ood.map(n=>'「'+n+'」').join('') : '') +
+    (sxs.length ? ' · 识别症状 '+sxs.length+' 项' : ' · 未识别到库内症状');
+  const sxChips = sxs.length ? `<div class="ctxsx"><span style="font-size:10.5px;color:#5d7067">从记录识别到症状，点击勾选：</span>` +
+    sxs.map(x=>`<span class="chip ${x.cls==='西医'?'west':''} ${sel.sxs.includes(x.name)?'on':''}" onclick="ctxPickSx('${esc(String(x.name).replace(/'/g,"\\'"))}')">${sel.sxs.includes(x.name)?'✓ ':''}${esc(x.name)}</span>`).join('') +
+    `<span class="ctxa" onclick="ctxSxAll(true)">✓ 全部勾选</span>` +
+    (sel.sxs.some(n=>sxs.some(x=>x.name===n)) ? `<span class="ctxa" onclick="ctxSxAll(false)">取消勾选</span>` : '') +
+    `</div>` : '';
+  const oodChips = ood.length ? `<div class="ctxsx"><span style="font-size:10.5px;color:#8a3329">识别到辨证库未收录的诊断，可一键插入后参与辨证：</span>` +
+    ood.map(n=>`<span class="ctxa" onclick="insertDiag('${esc(String(n).replace(/'/g,"\\'"))}')" style="color:#2c6ca8;border:1px dashed #7ba0cc;border-radius:8px;padding:1px 8px">＋ 插入「${esc(n)}」</span>`).join('') +
+    `</div>` : '';
+  strip.innerHTML = `<div class="ctxin"><span class="ctxb">📥 已带入截图记录</span>
+    <span class="ctxm">${esc(fmtTs(ctx.ts)||'')} · ${esc(srcName(ctx.source))} · ${ctx.charCount||0} 字${ctx.winTitle?' · '+esc(ctx.winTitle):''}${esc(hitTxt)}</span>
+    <button onclick="toggleCtxText()">查看原文</button><button onclick="clearCtx()">✕ 清除带入</button></div>${sxChips}${oodChips}
+    <div id="ctxText" style="display:none">${esc(ctx.text||'')}</div>`;
+}
+function toggleCtxText(){
+  const t=document.getElementById('ctxText');
+  if(t){ t.style.display = t.style.display==='none' ? 'block':'none'; const b=document.querySelector('#ctxStrip .ctxin button'); if(b) b.textContent = t.style.display==='none'?'查看原文':'收起原文'; }
+}
+async function clearCtx(){
+  try{ await api.clearConsultCtx(); }catch(e){}
+  ctx=null; ctxApplied=false;
+  applyCtx(null); clearAll();
+}
+function ctxPrefill(){ // 带入预选链：诊断 →（该诊断分型内）证型；症状不自动勾选，由带入条一键勾选
+  applyCtx(ctx); // 刷新识别提示文案
+  if(ctxApplied || !ctx) return;
+  ctxApplied=true;
+  const hits=ctxDiagHits(), sh=ctxSyndHit();
+  if(hits.length){
+    if(sel.diag!==hits[0].name) pickDiag(hits[0].name); // 守卫：pickDiag 是切换式，避免反选
+  } else if(sh && sh.diag && sel.diag!==sh.diag){
+    pickDiag(sh.diag);
+  }
+  if(sh && !sel.synd){
+    const d=D.diagnoses.find(x=>x.name===sel.diag);
+    const pool=(d && d.syndromes && d.syndromes.length) ? d.syndromes.map(s=>typeof s==='string'?s:(s&&s.name)).filter(Boolean) : D.syndromeRows.map(r=>r.name);
+    if(pool.some(p=>normSyn(p)===normSyn(sh.synd))){
+      sel.synd=sh.synd; renderSynd(); renderSx(); syncCur();
+    }
+  }
+  revealPickedDiag(); // 带入后诊断树高亮定位（展开分组并滚动到所选）
+}
+
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function normSyn(s){ return String(s||'').trim().replace(/证$/,''); }
+// 轻量 toast（本页此前无通知机制）
+let _toastT=null;
+function toast(msg){
+  let el=document.getElementById('qhToast');
+  if(!el){
+    el=document.createElement('div'); el.id='qhToast';
+    el.style.cssText='position:fixed;left:50%;bottom:34px;transform:translateX(-50%);background:rgba(40,50,35,.92);color:#f2f5ea;font-size:12.5px;padding:8px 16px;border-radius:9px;z-index:999;box-shadow:0 6px 18px rgba(0,0,0,.22);transition:opacity .3s;opacity:0;pointer-events:none;white-space:nowrap';
+    document.body.appendChild(el);
+  }
+  el.textContent=msg; el.style.opacity='1';
+  clearTimeout(_toastT); _toastT=setTimeout(()=>{ el.style.opacity='0'; },2600);
+}
+
+// 中药映射：组成逐味药说明（懒加载一次）
+let HERBS=null, HERBS_P=null;
+function ensureHerbs(){
+  if(HERBS) return Promise.resolve(HERBS);
+  if(!HERBS_P) HERBS_P = (window.qhjf.kbListAll ? window.qhjf.kbListAll() : Promise.reject(new Error('no api'))).then(d=>{
+    HERBS={};
+    ((d&&d.herbs)||[]).forEach(h=>{ if(h&&h.n){ HERBS[h.n]=h; (h.aliases||[]).forEach(a=>{ if(!HERBS[a]) HERBS[a]=h; }); } });
+    return HERBS;
+  }).catch(()=>{ HERBS={}; return HERBS; });
+  return HERBS_P;
+}
+// 组成字符串 → 逐味药块；数据未就绪返回 null 回退纯文本
+function composeHtml(cstr){
+  const s=String(cstr||'');
+  if(!HERBS||!s) return null;
+  const toks=s.split(/[、，,;；\n]+/).map(x=>x.trim()).filter(Boolean);
+  if(!toks.length) return null;
+  const cells=toks.map(tok=>{
+    const m=tok.match(/^([^\d]+)/);
+    let name=m?m[1]:tok;
+    const nameClean=name.replace(/[（(][^）)]*[)）]/g,'').replace(/各$/,'').trim();
+    const dose=nameClean?tok.slice(name.indexOf(nameClean)+nameClean.length):'';
+    const h=nameClean?HERBS[nameClean]:null;
+    if(!h) return `<span class="ci na"><span class="cn">${esc(tok)}</span></span>`;
+    // OCR 错字命中（如 臼术→白术）：显示纠正后正名并标注，title 注明原文
+    const ocrHit = h.ocr && h.ocr[nameClean];
+    const showName = ocrHit ? h.n : nameClean;
+    const fx=String(h.fx||h.prop||'').replace(/\s+/g,' ');
+    const ocrTag = ocrHit ? '<span class="cfx" title="'+esc('原文「'+nameClean+'」系OCR形近错字，已自动纠正为「'+h.n+'」')+'">纠</span>' : '';
+    return `<span class="ci has" data-h="${esc(nameClean)}"><span class="cn">${esc(showName)}${ocrTag}</span>${dose?`<span class="cd">${esc(dose)}</span>`:''}<span class="cx">${esc(fx.length>16?fx.slice(0,16)+'…':fx)}</span></span>`;
+  }).join('');
+  return `<div class="cing">${cells}</div>`;
+}
+
+// ===== 单味药详情弹窗（点击组成中的药味） =====
+// 医保规则映射（懒加载一次，与后台医保规则库同源）
+let YB_MAP=null;
+function ensureYbMap(){
+  if(YB_MAP) return Promise.resolve(YB_MAP);
+  return api.ybList().then(list=>{
+    YB_MAP={};
+    (list||[]).forEach(r=>{ if(r&&r.name&&!YB_MAP[r.name]) YB_MAP[r.name]=r; });
+    return YB_MAP;
+  }).catch(()=>{ YB_MAP={}; return YB_MAP; });
+}
+function ybDetailText(yb){
+  const parts=[];
+  if(yb.code) parts.push('编码 '+yb.code);
+  if(yb.limit) parts.push(yb.limit);
+  if(yb.copay) parts.push('自付 '+yb.copay+'%');
+  if(yb.note) parts.push(yb.note);
+  return parts.length ? parts.join('；') : '按当地医保目录支付';
+}
+function ybPillHtml(payType){
+  const cls = payType==='自费' ? 'yb-zf' : (payType==='甲类' ? 'yb-jia' : 'yb-yi');
+  return `<span class="yb-pill ${cls}">医保${esc(payType||'未设')}</span>`;
+}
+function herbModalHtml(h){
+  const rows=[];
+  const badges=(h.tox?'<span class="htox">毒性药</span>':'')+(h.pre===2?'<span class="hpreg">孕妇禁用</span>':h.pre===1?'<span class="hpreg">孕妇慎用</span>':'');
+  if(badges) rows.push(['标识',badges]);
+  if(h.category) rows.push(['分类',esc(h.category)]);
+  if(h.prop) rows.push(['性味',esc(h.prop)]);
+  if(h.fx) rows.push(['功效',esc(h.fx)]);
+  if((h.sx&&h.sx.length)) rows.push(['症状参考',esc(h.sx.join('、'))]);
+  else if(h.indications) rows.push(['主治',esc(h.indications)]);
+  if(h.use) rows.push(['用法',esc(h.use)]);
+  if(h.note) rows.push(['注意',esc(h.note)]);
+  if(h.origin) rows.push(['基原',esc(h.origin)]);
+  if(h.aliases&&h.aliases.length) rows.push(['别名',esc(h.aliases.join('、'))]);
+  const yb = (YB_MAP&&YB_MAP[h.n]) || null;
+  if(yb) rows.push(['医保', ybPillHtml(yb.payType)+' <span style="font-size:11px;color:#5d7067">'+esc(ybDetailText(yb))+'</span>']);
+  return `<div class="hmask" id="hmask"><div class="hmodal">
+    <div class="hmh"><span class="hmt">${esc(h.n)}</span><span class="hmx" title="关闭">✕</span></div>
+    <div class="hmb">${rows.map(r=>`<div class="hmr"><span class="hml">${r[0]}</span><span class="hmv">${r[1]}</span></div>`).join('')||'<div style="font-size:11px;color:#93a49a">暂无详细数据</div>'}</div>
+  </div></div>`;
+}
+function openHerbModal(name){
+  const h=HERBS&&HERBS[name]; if(!h) return;
+  closeHerbModal();
+  document.body.insertAdjacentHTML('beforeend',herbModalHtml(h));
+  const mask=document.getElementById('hmask');
+  mask.addEventListener('click',e=>{ if(e.target===mask||e.target.classList.contains('hmx')) closeHerbModal(); });
+}
+function closeHerbModal(){ const m=document.getElementById('hmask'); if(m) m.remove(); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeHerbModal(); closeResult(); } });
+document.addEventListener('click',e=>{ const c=e.target.closest('.cing .ci.has'); if(c) openHerbModal(c.getAttribute('data-h')); });
+
+async function reload(){
+  try{ D = await api.consultData() || D; }catch(e){}
+  ensureHerbs().then(()=>{ if(document.querySelector('#rmb .fcard')) analyze(); }); // 药味数据就绪后重渲染弹窗结果区（纯本地，幂等）
+  ensureYbMap().then(()=>{ if(document.getElementById('hmask')) closeHerbModal(); }); // 医保映射就绪（弹窗开着则关闭，下次点开带医保行）
+  if(!D.diagnoses.length && !D.symptoms.length && !D.syndromeRows.length){
+    document.getElementById('res').innerHTML='<div class="msg">后台辨证库暂无数据。请先在「后台管理 → 辨证库 / 辨证导入」导入标准中医诊断与证型、症状库。</div>';
+  }
+  renderAll();
+  // 截图带入：数据就绪后再预选（不触发分析）
+  if (ctx) { applyCtx(ctx); ctxPrefill(); }
+}
+function renderAll(){ renderDiag(); renderSynd(); renderSx(); syncCur(); }
+
+// ---- 分组折叠 ----
+const grpClosed = new Set();
+function grpHtml(id,label,count,inner,open){
+  return `<div class="grp ${open?'':'closed'}" id="${id}"><div class="grph" onclick="toggleGrp('${id}')"><span class="arr">▼</span>${esc(label)}<span class="cnt">${count||''}</span></div><div class="grpb">${inner}</div></div>`;
+}
+function toggleGrp(id){
+  const el=document.getElementById(id); if(!el) return;
+  el.classList.toggle('closed');
+  if(grpClosed.has(id)) grpClosed.delete(id); else grpClosed.add(id);
+}
+
+// ---- 拼音检索（诊断/症状名称与拼音/首字母匹配，依赖页头引入的 pinyin-pro UMD） ----
+const PYFN = (window.pinyinPro && window.pinyinPro.pinyin) || null;
+const pyF = s => { try { return PYFN ? PYFN(String(s), { toneType: 'none', type: 'array', nonZh: 'consecutive' }).join('').replace(/\s+/g, '').toLowerCase() : ''; } catch (e) { return ''; } };
+const pyI = s => { try { return PYFN ? PYFN(String(s), { pattern: 'first', toneType: 'none', type: 'array', nonZh: 'consecutive' }).join('').replace(/\s+/g, '').toLowerCase() : ''; } catch (e) { return ''; } };
+let PYIDX = null;
+function pyIdx() { // 诊断/症状条目 → [全拼(含分类/关联诊断文本), 名称首字母]
+  if (PYIDX) return PYIDX;
+  PYIDX = new Map();
+  (D.diagnoses || []).forEach(d => PYIDX.set('d:' + d.name, [pyF([d.name, d.cat || '', (d.syndromes || []).join(' ')].join(' ')), pyI(d.name)]));
+  (D.symptoms || []).forEach(x => PYIDX.set('s:' + x.name, [pyF([x.name, x.cls || '', x.diag || '', (x.syndromes || []).join(' ')].join(' ')), pyI(x.name)]));
+  return PYIDX;
+}
+function pyMatch(kind, name, kw) { // 纯字母检索词 → 拼音/首字母命中
+  if (!kw || !/^[a-z]+$/.test(kw)) return false;
+  const e = pyIdx().get(kind + ':' + name);
+  return !!e && (e[0].indexOf(kw) !== -1 || e[1].indexOf(kw) !== -1);
+}
+
+// ---- ① 诊断（按科别分组，可折叠） ----
+function diagRow(d, isWest){
+  const wb = isWest ? '<span class="wm2" title="中医病名（由西医诊断匹配置顶）">中</span>' : '';
+  return `<div class="diagrow ${sel.diag===d.name?'on':''}" onclick="pickDiag('${esc(String(d.name).replace(/'/g,"\\'"))}')">
+      ${wb}<span>${esc(d.name)}</span><span class="ct">${(d.syndromes||[]).length?esc((d.syndromes||[]).length)+' 型':'—'}</span></div>`;
+}
+function renderDiag(){
+  const kw=(document.getElementById('qDiag').value||'').trim().toLowerCase();
+  const wkw=(document.getElementById('qWest').value||'').trim();
+  const host=document.getElementById('diagBody');
+  if(!D.diagnoses.length){ host.innerHTML='<div class="hint">后台暂无诊断数据</div>'; return; }
+  // 西医诊断检索：诊断列表联动过滤——对照库候选（带「西」标注）置顶，再并入名称/分型关键字命中
+  if(wkw){
+    const rank=new Map(westCands.map((n,i)=>[n,i]));
+    const scored=[];
+    D.diagnoses.forEach(d=>{
+      const wr=rank.has(d.name)?rank.get(d.name):-1;
+      const kwHit = !kw || [d.name,d.cat||'',(d.syndromes||[]).join(' ')].join(' ').toLowerCase().includes(kw) || pyMatch('d',d.name,kw);
+      if(wr>=0 || kwHit) scored.push({ d, wr });
+    });
+    scored.sort((a,b)=>(a.wr<0?1:b.wr<0?-1:a.wr-b.wr));
+    if(!scored.length){ host.innerHTML='<div class="hint">「'+esc(wkw)+'」未匹配到中医诊断，可换个说法或清空西医输入</div>'; return; }
+    host.innerHTML = scored.map(x=>diagRow(x.d, x.wr>=0)).join('');
+    return;
+  }
+  const list = D.diagnoses.filter(d=>!kw || [d.name,d.cat||'',(d.syndromes||[]).join(' ')].join(' ').toLowerCase().includes(kw) || pyMatch('d',d.name,kw));
+  if(!list.length){ host.innerHTML='<div class="hint">无匹配诊断</div>'; return; }
+  if(kw){ host.innerHTML=list.map(d=>diagRow(d)).join(''); return; }
+  const groups={};
+  list.forEach(d=>{ const c=d.cat||'未分类'; (groups[c]=groups[c]||[]).push(d); });
+  host.innerHTML = Object.entries(groups).map(([c,arr],i)=>{
+    const id='gd_'+i;
+    return grpHtml(id, c, arr.length, arr.map(d=>diagRow(d)).join(''), !grpClosed.has(id));
+  }).join('');
+}
+function pickDiag(name){
+  sel.diag = sel.diag===name ? null : name;
+  sel.synd = null; // 切换诊断后重选证型
+  renderDiag(); renderSynd(); renderSx();
+  syncCur();
+}
+
+// ---- 西医诊断 → 中医诊断匹配（对照库 + 病域评分，与工作台同一引擎） ----
+let westTimer=null, westCands=[]; // westCands：最近一次西医输入命中的中医诊断（供诊断列表联动过滤）
+// 输入防抖：检索框统一 180ms（qWest 内部已有 westTimer 防抖）
+function dWrap(fn, ms){ let t; return function(){ clearTimeout(t); const a=arguments, self=this; t=setTimeout(function(){ fn.apply(self, a); }, ms==null?180:ms); }; }
+const dDiag=dWrap(function(){ renderDiag(); });
+const dSx=dWrap(function(){ renderSx(); }); // westCands：最近一次西医输入命中的中医诊断（供诊断列表联动过滤）
+function westMatch(){
+  clearTimeout(westTimer);
+  westTimer=setTimeout(async ()=>{
+    const kw=(document.getElementById('qWest').value||'').trim();
+    const host=document.getElementById('westHits');
+    if(!kw){ host.innerHTML=''; westCands=[]; renderDiag(); return; }
+    let cands=[];
+    try{ cands=(await api.westCandidates(kw))||[]; }catch(e){}
+    const names=new Set(D.diagnoses.map(d=>d.name));
+    westCands=cands.filter(n=>names.has(n));
+    host.innerHTML = westCands.length
+      ? `<span style="font-size:10.5px;color:#5a7ba6;align-self:center">「${esc(kw)}」匹配：</span>` +
+        westCands.slice(0,6).map(n=>`<span class="wchip" onclick="pickWest('${esc(String(n).replace(/'/g,"\\'"))}')"><span class="wm">中</span><b>${esc(n)}</b></span>`).join('')
+      : `<span style="font-size:10.5px;color:#93a49a;align-self:center">「${esc(kw)}」未匹配到中医诊断，可直接用下方病名过滤</span>`;
+    renderDiag(); // 诊断列表联动：西医候选置顶并标注
+  }, 200);
+}
+function pickWest(name){
+  sel.west = (document.getElementById('qWest').value||'').trim();
+  if(sel.diag!==name){ sel.diag=name; sel.synd=null; }
+  renderDiag(); renderSynd(); renderSx(); syncCur();
+}
+
+// ---- ② 证型 ----
+function renderSynd(){
+  const host=document.getElementById('syndBody');
+  const src=document.getElementById('syndSrc');
+  const d = D.diagnoses.find(x=>x.name===sel.diag);
+  let pool=[];
+  if(d && d.syndromes && d.syndromes.length){
+    pool = d.syndromes.map(s=>typeof s==='string' ? s : (s&&s.name)||'').filter(Boolean);
+    src.textContent = `「${d.name}」分型`;
+  } else {
+    pool = D.syndromeRows.map(r=>r.name);
+    src.textContent = sel.diag ? '该诊断未录分型 · 显示全库证型' : '全库证型';
+  }
+  const unique=[...new Set(pool)];
+  // 证型提示（非中医人员友好）：症状库反查常见表现 + 已选症状支持度
+  const sxm = {};
+  (D.symptoms||[]).forEach(x=>{ if(x.cls==='西医') return; (x.syndromes||[]).forEach(ss=>{ const k=normSyn(ss); (sxm[k]=sxm[k]||[]).push(x.name); }); });
+  const votes = {};
+  (sel.sxs||[]).forEach(sn=>{ const sx=(D.symptoms||[]).find(x=>x.name===sn); if(!sx) return; (sx.syndromes||[]).forEach(ss=>{ const k=normSyn(ss); votes[k]=(votes[k]||0)+1; }); });
+  host.innerHTML = unique.map(s=>{
+    const sxList = sxm[normSyn(s)]||[];
+    const tip = sxList.length ? sxList.slice(0,8).join('、') : '暂无关联症状数据，可勾选症状辅助判断';
+    const v = votes[normSyn(s)]||0;
+    const badge = v ? `<i style="font-style:normal;background:#e4f1d9;color:#3f6d2f;border:1px solid #c9e2d3;border-radius:8px;font-size:9.5px;padding:0 5px;margin-left:3px">症状支持 ${v}</i>` : '';
+    return `<span class="chip syn ${sel.synd===s?'on':''}" title="常见表现：${esc(tip)}" onclick="pickSynd('${esc(String(s).replace(/'/g,"\\'"))}')">${esc(s)}${badge}</span>`;
+  }).join('') || '<div class="hint">暂无证型，请在后台补录或导入</div>'
+    + `<div id="syndHint" style="margin-top:6px;padding:7px 10px;border:1px dashed #d8d2b8;border-radius:8px;background:#faf7ea;font-size:11.5px;line-height:1.7;color:#5d7067">${sel.synd
+      ? `<b style="color:#3c5a2e">${esc(sel.synd)}</b> 常见表现：${(sxm[normSyn(sel.synd)]||[]).length?esc(sxm[normSyn(sel.synd)].slice(0,10).join('、')):'（症状库暂未关联该证型）'}<br><span style="color:#8a8f7d">不确定选哪个？在下方③勾选患者实际症状，系统按症状加权推荐（带「症状支持」角标者更吻合）。</span>`
+      : '点选证型可见其常见表现；不确定时可在下方③勾选患者实际症状，由系统推荐证型。'}</div>`;
+}
+function pickSynd(s){ sel.synd = sel.synd===s ? null : s; renderSynd(); renderSx(); syncCur(); }
+// 方剂详情内中药/证型链接（结果卡片里组成已是 .ci 弹窗；此处兜底证型标签）
+
+// ---- ③ 症状（多选，辅助辨证；分组+联动高亮） ----
+function isRelatedSx(x){
+  if(sel.synd && (x.syndromes||[]).some(s=>normSyn(s)===normSyn(sel.synd))) return true;
+  if(sel.diag && (x.diag||'').includes(sel.diag)) return true;
+  return false;
+}
+function sxChip(x){
+  const isTcm = x.cls!=='西医';
+  const on = sel.sxs.includes(x.name);
+  const rel = isRelatedSx(x);
+  return `<span class="chip ${isTcm?'':'west'} ${rel?'rel':''} ${on?'on':''}" title="${esc((x.diag||'')+' '+(x.syndromes||[]).join('、'))}"
+      onclick="pickSx('${esc(String(x.name).replace(/'/g,"\\'"))}')">${on?'✓ ':''}${esc(x.name)}</span>`;
+}
+function renderSx(){
+  const kw=(document.getElementById('qSx').value||'').trim().toLowerCase();
+  const host=document.getElementById('sxBody');
+  if(!D.symptoms.length){ host.innerHTML='<div class="hint">后台暂无症状库数据</div>'; return; }
+  const match=x=>!kw || [x.name,x.cls||'',x.diag||'',(x.syndromes||[]).join(' ')].join(' ').toLowerCase().includes(kw) || pyMatch('s',x.name,kw);
+  const relList  = D.symptoms.filter(x=>match(x) && (sel.diag||sel.synd) && isRelatedSx(x));
+  const tcmList  = D.symptoms.filter(x=>match(x) && x.cls!=='西医' && !((sel.diag||sel.synd) && isRelatedSx(x)));
+  const westList = D.symptoms.filter(x=>match(x) && x.cls==='西医' && !((sel.diag||sel.synd) && isRelatedSx(x)));
+  const secs=[];
+  if(sel.diag||sel.synd) secs.push(['gs0','⭐ 与当前辨证相关', relList.length+' / 相关', relList]);
+  secs.push(['gs1','中医症状','中医 '+tcmList.length, tcmList]);
+  secs.push(['gs2','西医症状','西医 '+westList.length, westList]);
+  host.innerHTML = secs.filter(s=>s[3].length).map(([id,label,cnt,l])=>
+    grpHtml(id,label,cnt,l.map(sxChip).join(''),!grpClosed.has(id))
+  ).join('') || '<div class="hint">无匹配症状</div>';
+}
+function pickSx(s){
+  const i = sel.sxs.indexOf(s);
+  if(i>=0) sel.sxs.splice(i,1); else sel.sxs.push(s);
+  renderSx(); renderSynd(); syncCur();
+}
+
+// ---- 选中摘要 ----
+function syncCur(){
+  const cur=document.getElementById('selCur');
+  const parts=[];
+  if(sel.west) parts.push(`<span class="tag2" style="border-color:#c9ddf9;background:#edf3fa">西医诊断 <b style="color:#2c6ca8">${esc(sel.west)}</b></span>`);
+  if(sel.diag) parts.push(`<span class="tag2">诊断 <b>${esc(sel.diag)}</b></span>`);
+  if(sel.synd) parts.push(`<span class="tag2" style="border-color:#e6cfa0">证型 <b>${esc(sel.synd)}</b></span>`);
+  if(sel.sxs.length) parts.push(`<span class="tag2">症状 ${sel.sxs.length} 项</span>`);
+  cur.innerHTML = parts.length ? parts.join('') : '<span style="color:#93a49a">选择 诊断 → 证型（或勾选症状）后生成推荐</span>';
+  const ready = !!(sel.synd || sel.sxs.length);
+  document.getElementById('goBtn').disabled = !ready;
+  document.getElementById('aiBtn').disabled = !ready;
+}
+function clearAll(){
+  sel={west:'',diag:null,synd:null,sxs:[]};
+  document.getElementById('qDiag').value=''; document.getElementById('qSx').value='';
+  document.getElementById('qWest').value=''; document.getElementById('westHits').innerHTML='';
+  westCands=[];
+  renderAll();
+}
+
+// ===== 分析结果弹窗（本地分析 / AI 分析点击后弹出展示） =====
+// 由记录面板带记录进入时（ctx.id），弹窗顶部挂人工复核条：与记录面板详情共用
+// renderer/review-bar.js 的同一份实现，裁定结果写回同一条记录（默认列表隐去/留痕同理）。
+let resState = null;   // 当前弹窗内容，便于裁定后原样重渲染
+function openResult(inner, title, sub){
+  closeResult();
+  resState = { inner: inner||'', title: title||'分析结果', sub: sub||'' };
+  document.body.insertAdjacentHTML('beforeend', `<div class="rmask" id="rmask"><div class="rmodal">
+    <div class="rmh"><span class="rt1">${esc(resState.title)}</span><span class="rt2">${esc(resState.sub)}</span><span class="rmx" title="关闭 (Esc)">✕</span></div>
+    <div class="rmb" id="rmb">${ReviewBar.html(rvRec)}${resState.inner}</div></div></div>`);
+  const m=document.getElementById('rmask');
+  m.addEventListener('click',e=>{ if(e.target===m) closeResult(); });
+  m.querySelector('.rmx').onclick=closeResult;
+  ReviewBar.bind();
+}
+function closeResult(){ const m=document.getElementById('rmask'); if(m) m.remove(); resState=null; }
+function setResultInner(html){
+  resState = Object.assign({}, resState||{}, { inner: html||'' });
+  const b=document.getElementById('rmb');
+  if(b){ b.innerHTML = ReviewBar.html(rvRec)+resState.inner; ReviewBar.bind(); }
+  else openResult(html);
+}
+// 复核裁定后：只换弹窗内容，不动已展开的分析结果
+function rvRerender(){
+  const b=document.getElementById('rmb');
+  if(!b || !resState) return;
+  b.innerHTML = ReviewBar.html(rvRec)+resState.inner;
+  ReviewBar.bind();
+}
+function hasResultOpen(){ return !!document.getElementById('rmb'); }
+
+// ---- AI 分析（本地未收录时可手动触发 / 直接云端辨证） ----
+let aiBusy=false;
+function buildAiQuestion(chosen, fromMiss){
+  const recQ = (ctx && ctx.text)
+    ? `\n【患者记录原文 · ${srcName(ctx.source)}${ctx.winTitle?' · '+ctx.winTitle:''}】\n${String(ctx.text).slice(0,600)}${(ctx.charCount||0)>600?'…（已截断，请结合上下文判断）':''}`
+    : '';
+  const q = [
+    `患者${sel.west?('西医诊断：'+sel.west+'；'):''}中医诊断：${sel.diag||'未指定'}；辨证证型：${chosen}。${sel.sxs.length?('患者症状：'+sel.sxs.join('、')+'。'):''}`,
+    ...(recQ ? [recQ] : []),
+    (fromMiss ? `本地方剂库(${D.formulas.length}首经典方)未检索到直接对应该证型的方剂。请重点依据患者记录原文中的症状、舌脉与用药进行辨证。` : '请综合分析后辨证处方。'),
+    '请基于中医经典理论给出：',
+    '1. 该证型的病机与治法；',
+    '2. 推荐经典方剂1-3首：每首给出方名、出处、组成、针对本证的加减要点；',
+    '3. 用药注意与禁忌。',
+    '要求：方名与出处必须真实可靠，不得编造；用 Markdown 分点作答，善用小标题与列表。'
+  ].join('\n');
+  return q;
+}
+// ---- AI 分析进度条（ai:progress 事件；与 panel.html / ai.html 同一套里程碑文案） ----
+let aiProgTimer=null, aiProgT0=0;
+function aiProgHtml(){
+  return `<div class="aprog"><div class="ahd"><span class="lb" id="aiProgLabel">准备分析上下文（脱敏文本 + 规则引擎结果）…</span><span class="pc"><span id="aiProgPct">6</span>%</span></div>`
+    + `<div class="tk"><div class="br" id="aiProgBar" style="width:6%"></div></div>`
+    + `<div class="afl">已用 <b id="aiProgElapsed">0</b> 秒 · 输出较长时模型会自动续写，无需操作</div></div>`;
+}
+function aiProgUpdate(p){
+  const bar=document.getElementById('aiProgBar'); if(!bar) return;
+  const pct=Math.max(0,Math.min(100,Number(p.pct)||0));
+  bar.style.width=pct+'%';
+  const pc=document.getElementById('aiProgPct'); if(pc) pc.textContent=String(pct);
+  const lb=document.getElementById('aiProgLabel'); if(lb && p.label) lb.textContent=p.label;
+}
+function aiProgTick(){
+  const el=document.getElementById('aiProgElapsed');
+  if(!el){ aiProgStopTimer(); return; }   // 结果已替换掉进度块 → 计时器自动收摊
+  el.textContent=String(Math.max(0,Math.round((Date.now()-aiProgT0)/1000)));
+}
+function aiProgTimerStart(){ aiProgStopTimer(); aiProgT0=Date.now(); aiProgTick(); aiProgTimer=setInterval(aiProgTick,1000); }
+function aiProgStopTimer(){ if(aiProgTimer){ clearInterval(aiProgTimer); aiProgTimer=null; } }
+
+async function aiAsk(chosen, fromMiss){
+  if(aiBusy) return;
+  const target = chosen || sel.synd;
+  if(!target && !sel.sxs.length) return;
+  const c = target || (sel.sxs.length ? '（症状加权）' : '');
+  aiBusy=true;
+  const go=document.getElementById('aiBtn');
+  const goTxt=go.textContent;
+  go.disabled=true; go.textContent='AI 分析中…';
+  const mark = fromMiss ? `<div class="msg" style="background:#f2f6fb;border-color:#c9ddf9;color:#2c6ca8;margin-bottom:4px">⚠ 本地方剂库未命中「${esc(c)}」——以下为 <b>AI 分析</b> 结果：</div>` : '';
+  const sub = `${sel.west?('西医 '+sel.west+' · '):''}${sel.diag||'—'} · ${c}`;
+  openResult(`<div class="msg">正在调用云端大模型（${esc(fromMiss?'结合本地知识库':'RAG 检索本地 170 首方 / 338 味药')}）分析「${esc(c)}」…</div>` + aiProgHtml(), 'AI 辨证分析', sub);
+  aiProgTimerStart();
+  let r;
+  try{
+    r = await api.aiRun('ask', { question: buildAiQuestion(c, fromMiss) });
+  }catch(e){ r = { ok:false, error:'AI 调用失败：'+(e&&e.message||e) }; }
+  aiProgStopTimer();
+  aiBusy=false; go.disabled=false; go.textContent=goTxt; syncCur();
+  if(r && r.ok && r.answer){
+    setResultInner(renderAiBox(r, c, mark));
+  } else {
+    setResultInner(`<div class="msg" style="background:#fdf3f1;border-color:#eec9c4;color:#8a3329">AI 分析未能完成：${esc((r&&r.error)||'未配置模型，请到「后台管理 → AI 设置」填写 API Key')}</div>`);
+  }
+}
+function renderAiBox(r, c, mark){
+  const head = mark || `<div class="msg" style="background:#f2f6fb;border-color:#c9ddf9;color:#2c6ca8;margin-bottom:4px">
+    🤖 AI 辨证分析「${esc(c)}」 · ${esc(r.model||'预设模型')}${r.mock?'（演示模式）':''}：</div>`;
+  const refs = (r.refs&&r.refs.length) ? `<div class="airefs">📚 参考本地知识库：${r.refs.map(x=>esc(x.kind+'《'+x.name+'》')).join('、')}</div>` : '';
+  const body = `<div class="aibox">${window.MD ? MD.render(r.answer||'') : esc(r.answer||'').replace(/\n/g,'<br>')}</div>`;
+  return head+body+refs+`<div class="disclaimer">以上为 AI 生成内容，仅供学习参考，实际处方须经执业医师辨证审定。</div>`;
+}
+async function analyze(){
+  const sub = `${sel.west?('西医 '+sel.west+' · '):''}${sel.diag||'—'}${sel.synd?' · '+sel.synd:''}${sel.sxs.length?' · 症状 '+sel.sxs.length+' 项':''}`;
+  // 症状 → 证型加权
+  const boost={};
+  sel.sxs.forEach(sx=>{
+    const it=D.symptoms.find(x=>x.name===sx);
+    (it&&it.syndromes||[]).forEach(s=>boost[s]=(boost[s]||0)+1);
+  });
+  const d = D.diagnoses.find(x=>x.name===sel.diag);
+  // 证型池：选中证型优先；否则症状投票；再退到诊断分型
+  let chosen=null, mode='';
+  if(sel.synd){ chosen=sel.synd; mode='exact'; }
+  else if(sel.sxs.length){
+    const vote = Object.entries(boost).sort((a,b)=>b[1]-a[1]);
+    if(vote.length){ chosen=vote[0][0]; mode='vote'; }
+  } else if(d && d.syndromes && d.syndromes.length){ chosen=null; }
+  if(!sel.synd && !sel.sxs.length && d){
+    openResult('<div class="msg">请先在上方选择该诊断的一个<b>证型</b>，或勾选患者症状（将按症状对证型加权推荐）。</div>', '本地辨证分析', sub);
+    return;
+  }
+  if(!chosen){
+    openResult('<div class="msg">已选症状未命中证型映射。请到「后台管理 → 辨证库」给症状补充提示证型，或直接选一个证型再试。</div>', '本地辨证分析', sub);
+    return;
+  }
+  const nChosen=normSyn(chosen);
+  // 候选：主治证型命中所选证型（全等/互相包含）；兜底：诊断分型里其它证型命中（相近推荐）
+  const cands = D.formulas.filter(f=>f.s&&f.s.some(s=>{ const ns=normSyn(s); return ns===nChosen||ns.includes(nChosen)||nChosen.includes(ns); }));
+  const otherSynds = d?d.syndromes.filter(s=>normSyn(s)!==nChosen):[];
+  const near = cands.length ? [] : D.formulas.filter(f=>f.s&&f.s.some(s=>otherSynds.includes(s)) && !cands.includes(f));
+  // 汤方（方药）优先于中成药（稳定排序，各组内保持原吻合度顺序），首位标星
+  const list = cands.concat(near)
+    .sort((a,b)=>((a.k||'f')===(b.k||'f')?0:(a.k||'f')==='f'?-1:1))
+    .slice(0,6);
+  // 合规提示（基于证候方向）
+  const hints=[];
+  const hot = sel.sxs.length && boost[chosen]>=2;
+  if(hot) hints.push(`所勾症状中有 ${boost[chosen]} 项指向「${chosen}」，与所荐方证候方向一致，可作为辨证依据。`);
+  if(mode==='vote') hints.push(`未直接选证型：由 ${boost[chosen]} 项症状加权判定为「${chosen}」，请结合舌脉复核。`);
+  if(d && otherSynds.length && cands.length===0) hints.push(`「${d.name}」另有分型：${otherSynds.join('、')}。若患者表现更接近其它分型，请改选后重新生成。`);
+  let html='';
+  if(!list.length){
+    // 方剂库未命中 → 给出可操作提示 + 一键 AI 分析
+    openResult(`<div class="msg" style="background:#fdf8ea;border-color:#f0dcb0;color:#7a6426;margin-bottom:4px">本地方剂库（${D.formulas.length} 首）暂无直接对应「${esc(chosen)}」的经典方。<br>
+      可：① 点下方 <b>AI 分析</b> 让大模型结合本地知识库辨证处方；② 后台「辨证库」核对证型命名；③ 到「AI 问药」手动咨询。</div>
+      <button class="ainline" onclick="aiAsk('${esc(String(chosen).replace(/'/g,"\\'"))}', true)">🤖 AI 分析此证型</button>`, '本地辨证分析', sub);
+    return;
+  } else {
+    html = list.map((f,idx)=>{
+      const exact = f.s.some(s=>normSyn(s)===nChosen);
+      const bdg = (idx===0?'<span class="bdg top">⭐ 首选</span>':'')
+        + (exact?'<span class="bdg ok">证型吻合</span>':(idx<cands.length?'<span class="bdg ok">吻合</span>':'<span class="bdg near">相近证型 · 供参考</span>'));
+      const rows=[];
+      if(f.origin) rows.push(`<div class="fr"><span class="flb">出处</span><span>${esc(f.origin)}</span></div>`);
+      if(f.c){ const cHtml=composeHtml(f.c); rows.push(`<div class="fr"><span class="flb">组成</span><span>${cHtml||esc(f.c)}</span></div>`); }
+      if(f.g) rows.push(`<div class="fr"><span class="flb">功效</span><span>${esc(f.g)}</span></div>`);
+      if(f.m) rows.push(`<div class="fr"><span class="flb">主治</span><span>${esc(f.m)}</span></div>`);
+      if(f.u) rows.push(`<div class="fr"><span class="flb">用法</span><span>${esc(f.u)}</span></div>`);
+      const note2 = f.x?`<div class="note2">⚠ ${esc(f.x)}</div>`:'';
+      const patB = (f.k||'f')==='p'?'<span class="bdg" style="background:#fceef4;color:#a03a5e;border:1px solid #f7c8d5">中成药</span>':'';
+      return `<div class="fcard"><div class="fhd"><span class="fn">${esc(f.n)}</span><span class="fo">${esc(f.origin||'')}</span><span style="flex:1"></span>${patB}${bdg}</div>
+        <div class="frows">${rows.join('')}</div>${note2}</div>`;
+    }).join('');
+  }
+  const selDesc=`${sel.west?`<span class="tag2" style="border-color:#c9ddf9">西医 <b style="color:#2c6ca8">${esc(sel.west)}</b></span> `:''}<span style="font-weight:600;color:var(--deep)">${esc(sel.diag||'—')}</span> · <b>${esc(chosen)}</b>${sel.sxs.length?`（症状 ${sel.sxs.map(x=>esc(x)).join('、')}）`:''}`;
+  openResult(`<div class="msg" style="background:#eef6f0;border-color:#cfe3cd;color:#2e5638;margin-bottom:4px">辨证结果：诊断 ${selDesc}<br>${hints.join('<br>')||'已按所选证型给出代表方，请核对舌脉后参考选用。'}</div>${html}`, '本地辨证分析', sub);
+}
+
+(async () => {
+  await reload();
+  try {
+    const c = await api.consultCtx();
+    if (c) { applyCtx(c); ctxPrefill(); }
+  } catch (e) {}
+  if (window.qhjf && window.qhjf.onConsultCtx) {
+    window.qhjf.onConsultCtx(c => { ctxApplied = false; applyCtx(c); if (c) ctxPrefill(); });
+  }
+  // AI 分析进度：只在本页发起过 AI 请求、且进度块还在时才更新
+  if (window.qhjf && window.qhjf.onAiProgress) {
+    window.qhjf.onAiProgress(p => {
+      if (!p || typeof p.pct !== 'number' || !aiBusy) return;
+      aiProgUpdate(p);
+    });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# 超过 GitHub 100MB 限制的 Electron 运行时
+Electron版/runtime/electron.exe
+
+# 用户数据（真实病历记录，不上传）
+**/userdata/

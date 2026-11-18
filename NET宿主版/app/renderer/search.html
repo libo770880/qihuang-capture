@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>岐黄鉴方 · 中药/方剂知识检索</title>
+<style>
+  :root{--topbar:#123f28;--deep:#1e3d27;--green:#2f5d3a}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:#f6f3e9;color:#23311f;font-size:13px;display:flex;flex-direction:column;overflow:hidden}
+  .top{height:46px;background:var(--topbar);color:#eef3e0;display:flex;align-items:center;padding:0 16px;gap:10px;flex:none}
+  .top .t1{font-family:KaiTi,serif;font-size:17px;letter-spacing:1px}
+  .top .t2{font-size:11px;opacity:.75}
+  .top .sp{flex:1}
+  .top button{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);color:#eef3e0;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer}
+  .top button:hover{background:rgba(255,255,255,.24)}
+  .tip{font-size:11px;color:#9a9c8a;padding:8px 16px 0;line-height:1.6}
+  .host{flex:1;min-height:0;padding:10px 14px 14px;display:flex}
+  #host{flex:1;min-width:0}
+</style>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<div class="top">
+  <span class="t1">岐黄鉴方</span><span class="t2">· 中药 / 方剂知识检索</span>
+  <div class="sp"></div>
+  <button onclick="window.qhjf.openAdmin()" style="background:rgba(255,255,255,.06);border-color:rgba(240,193,100,.55);color:#ffe9b0">⚙ 后台管理</button>
+</div>
+<div class="tip">知识来自内置库与后台导入数据的实时合并；检索命中名称、别名、功效、主治、组成、用法、出处/基原等字段。结果仅供辅助参考。</div>
+<div class="host"><div id="host"></div></div>
+<script src="kbsearch.js"></script>
+<script>
+  window.KBSearch.mount(document.getElementById('host'));
+</script>
+</body>
+</html>

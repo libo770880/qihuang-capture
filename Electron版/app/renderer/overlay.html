@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  html,body{margin:0;padding:0;overflow:hidden;background:transparent;cursor:crosshair;user-select:none;-webkit-user-select:none}
+  #tip{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:rgba(16,28,18,.9);color:#eaf3e0;
+    font:13px "Microsoft YaHei",sans-serif;padding:8px 18px;border-radius:99px;letter-spacing:1px;
+    box-shadow:0 4px 14px rgba(0,0,0,.3);pointer-events:none;z-index:20}
+  #sel{position:fixed;border:2px solid #4a9a6d;background:rgba(74,154,109,.18);display:none;z-index:10;
+    box-shadow:0 0 0 9999px rgba(10,16,10,.32)}
+  #sel .dim{position:absolute;right:-22px;top:-26px;font-size:12px;color:#fff;background:#1d4d33;border-radius:4px;padding:1px 6px;white-space:nowrap}
+  .hnd{position:absolute;width:10px;height:10px;background:#fff;border:2px solid #4a9a6d;border-radius:50%;z-index:12;display:none}
+  #cv{position:fixed;left:0;top:0;z-index:11}
+  /* 工具条（选中后出现在选区下方，放不下则上方） */
+  #bar{position:fixed;display:none;z-index:30;background:rgba(22,30,26,.95);border:1px solid rgba(255,255,255,.14);
+    border-radius:10px;padding:6px 8px;gap:2px;box-shadow:0 6px 20px rgba(0,0,0,.4);
+    flex-direction:column;align-items:flex-start;max-width:600px}
+  #bar .row{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
+  .tb{width:34px;height:32px;border:none;background:transparent;color:#e8eee2;font-size:16px;border-radius:7px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;font-family:"Segoe UI Emoji","Microsoft YaHei",sans-serif}
+  .tb:hover{background:rgba(255,255,255,.14)}
+  .tb.on{background:rgba(122,196,150,.30);color:#bfe8cd}
+  .tb.ok{color:#7ee29a;font-size:17px}
+  .tb.no{color:#ff7a6b;font-size:17px}
+  .tb.ocr{color:#f2c14e;font-weight:700;font-size:14px}
+  .tb.ai{color:#7ec8f2;font-weight:700;font-size:12.5px;letter-spacing:.5px}
+  .sep{display:inline-block;width:1px;height:20px;background:rgba(255,255,255,.18);margin:0 5px;vertical-align:middle}
+  #txtin{position:fixed;display:none;z-index:31;background:transparent;border:1px dashed #7ac496;color:#7ac496;
+    font:16px "Microsoft YaHei",sans-serif;padding:2px 4px;outline:none;min-width:60px}
+  #cancel{position:fixed;bottom:20px;right:24px;z-index:9;background:rgba(24,36,26,.92);color:#dfe6d3;
+    font:12px "Microsoft YaHei",sans-serif;padding:8px 14px;border-radius:8px;pointer-events:none;border:1px solid rgba(255,255,255,.15)}
+  /* 放大镜（框选阶段跟随光标） */
+  #mg{position:fixed;z-index:15;display:none;pointer-events:none;border:1px solid rgba(255,255,255,.5);
+    border-radius:6px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.5);background:#000}
+  #mg canvas{display:block}
+  #mgLabel{display:block;background:rgba(10,16,10,.88);color:#eaf3e0;font:11px Consolas,monospace;
+    text-align:center;padding:2px 4px;letter-spacing:.5px;white-space:nowrap}
+  /* 8 个把手：4 角 + 4 边中点，选中后可拖拽调整框选范围 */
+  .hnd[data-k="nw"],.hnd[data-k="se"]{cursor:nwse-resize}
+  .hnd[data-k="ne"],.hnd[data-k="sw"]{cursor:nesw-resize}
+  .hnd[data-k="n"],.hnd[data-k="s"]{cursor:ns-resize}
+  .hnd[data-k="w"],.hnd[data-k="e"]{cursor:ew-resize}
+  .hnd[data-k="n"],.hnd[data-k="s"],.hnd[data-k="w"],.hnd[data-k="e"]{border-radius:3px}
+  /* 中药抓取说明：工具条下方的提示条 + 「药」按钮展开的药品详情面板 */
+  #hint{font:11.5px/1.5 "Microsoft YaHei",sans-serif;color:#a9cfba;padding:3px 6px 1px;
+    max-width:560px;white-space:normal;text-align:left;letter-spacing:0}
+  #tcm{display:none;position:fixed;z-index:29;background:rgba(10,18,12,.97);
+    border:1px solid rgba(122,196,150,.35);border-radius:8px;
+    max-height:86vh;overflow:auto;overscroll-behavior:contain;
+    font:12.5px/1.7 "Microsoft YaHei",sans-serif;color:#dff0e4;text-align:left;
+    box-shadow:0 10px 28px rgba(0,0,0,.5)}
+  #tcmHead{position:sticky;top:0;z-index:1;background:rgba(14,26,18,.99);padding:7px 10px;
+    font-weight:600;color:#ffd479;border-bottom:1px solid rgba(122,196,150,.25);
+    display:flex;align-items:center;gap:6px}
+  #tcmBody{padding:7px 10px 9px}
+  #tcm b{color:#ffd479;font-weight:600}
+  #tcm i{color:#9fd8b4;font-style:normal}
+  #bar.tcm-on #tcm{display:block}
+  #tcm::-webkit-scrollbar{width:8px}
+  #tcm::-webkit-scrollbar-track{background:rgba(255,255,255,.04)}
+  #tcm::-webkit-scrollbar-thumb{background:rgba(122,196,150,.35);border-radius:4px}
+  #tcm::-webkit-scrollbar-thumb:hover{background:rgba(122,196,150,.55)}
+  .tb.tcmbtn{color:#ffd479;font-weight:700;font-size:14px}
+  /* 药品卡片：①药名 + 徽标 ②说明 ③用法 ④注意 */
+  .hb{border:1px solid rgba(122,196,150,.22);border-radius:7px;padding:7px 9px;margin:0 0 7px;
+    background:rgba(255,255,255,.03)}
+  .hb:last-child{margin-bottom:0}
+  .hb-h{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+  .hb-n{font-size:13.5px;font-weight:600;color:#eaf6ea}
+  .hb-b{font-size:10.5px;line-height:1.5;padding:1px 6px;border-radius:99px;
+    background:rgba(122,196,150,.18);color:#a9cfba}
+  .hb-b.dose{background:rgba(255,212,121,.16);color:#ffd479}
+  .hb-b.tox{background:rgba(255,122,107,.18);color:#ff9b8f}
+  .hb-b.pre{background:rgba(255,160,80,.18);color:#ffc08a}
+  .hb-l{display:flex;gap:5px;margin-top:3px}
+  .hb-k{flex:none;width:32px;color:#7fae93}
+  .hb-v{flex:1;min-width:0;color:#dff0e4;word-break:break-word}
+  .hb-t{margin:2px 0 6px;color:#ffd479;font-weight:600;font-size:12px}
+  .hb-t .hint{color:#7fae93;font-weight:400;margin-left:6px}
+  .hb-empty{color:#a9cfba}
+  .hb-hint{color:#7fae93;font-size:11px;margin-top:5px}
+  /* 底图（放大镜数据源）在遮罩出窗后才抓，未到之前先不显示提示条，避免被拍进底图 */
+  body.pre #tip,body.pre #cancel{display:none}
+  /* ocrModal removed: 转文字改走粘贴框管线 */
+</style>
+</head>
+<body>
+<div id="tip">按住左键拖拽框选区域 · 松开后可用工具条标注 · 右键或 ESC 取消</div>
+<div id="sel"><span class="dim" id="dim"></span></div>
+<div class="hnd" id="h0" data-k="nw"></div><div class="hnd" id="h1" data-k="ne"></div>
+<div class="hnd" id="h2" data-k="sw"></div><div class="hnd" id="h3" data-k="se"></div>
+<div class="hnd" id="h4" data-k="n"></div><div class="hnd" id="h5" data-k="s"></div>
+<div class="hnd" id="h6" data-k="w"></div><div class="hnd" id="h7" data-k="e"></div>
+<canvas id="cv"></canvas>
+<div id="bar"></div>
+<div id="mg"><canvas id="mgc" width="136" height="104"></canvas><span id="mgLabel"></span></div>
+<input id="txtin" placeholder="输入文字，回车确认">
+<div id="cancel">右键 / ESC 取消</div>
+<script>
+  const sel=document.getElementById('sel'), dim=document.getElementById('dim');
+  const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  const bar=document.getElementById('bar'), tip=document.getElementById('tip'), txtin=document.getElementById('txtin');
+  // 8 个把手：4 角 + 4 边中点；顺序与 HTML 里 h0..h7 的 data-k 一致
+  const handles=[document.getElementById('h0'),document.getElementById('h1'),
+                 document.getElementById('h2'),document.getElementById('h3'),
+                 document.getElementById('h4'),document.getElementById('h5'),
+                 document.getElementById('h6'),document.getElementById('h7')];
+  const HANDLE_POS=[[0,0],[1,0],[0,1],[1,1],[.5,0],[.5,1],[0,.5],[1,.5]];
+  const TOOLS=[
+    {k:'rect', ico:'▭', name:'矩形'},
+    {k:'ellipse', ico:'○', name:'椭圆'},
+    {k:'arrow', ico:'↗', name:'箭头'},
+    {k:'pen', ico:'✎', name:'画笔'},
+    {k:'text', ico:'T', name:'文字'},
+    {k:'mosaic', ico:'▨', name:'马赛克'}
+  ];
+  let phase='drag';            // drag=框选中 | anno=标注中
+  let s=null, e=null, active=false;
+  let rect=null;               // {x,y,w,h}
+  let tool=null;               // 当前标注工具
+  let strokes=[];              // 已提交笔画 {type, pts/rect/text...}
+  let cur=null;                // 进行中笔画
+  let color='#ff5a4e';
+  let drag=null;               // 调整框选范围：{mode:'nw'|'ne'|'sw'|'se'|'n'|'s'|'w'|'e'|'move', ox, oy, r0}
+  let bgReady=false;           // 底图（放大镜数据源）是否已到；未到之前不显示提示条，免得被拍进底图
+  let tcmBusy=false;           // 「药」：识别中
+  let tcmLoadedKey='';         // 「药」：已识别结果对应的选区指纹（换选区即失效，需重跑）
+
+  // 画布铺满工作区
+  function sizeCanvas(){
+    cv.width=innerWidth; cv.height=innerHeight;
+    redraw();
+  }
+  sizeCanvas();
+  window.addEventListener('resize', sizeCanvas);
+
+  // ---------- 工具条 ----------
+  // 「药」面板默认内容：中药抓取要点（中医处方在 HIS 里的排版特点，框选时不用猜该框哪些行）
+  const TCM_HTML=
+    '<div><i>①药味行</i>：黄芪15g、酒大黄3g —— 剂量紧挨药名，别把单位「g」截在框外</div>'+
+    '<div><i>②用法行</i>：每日1剂 / 分早晚两次饭后内服 —— 外用（外洗·外敷·熏洗）据此豁免内服剂量核查，务必框入</div>'+
+    '<div><i>③诊断行</i>：中医诊断 + 证型，供「证法方药」一致性质控</div>'+
+    '<div><i>④折行</i>：HIS 按宽度换行（如「党参10g每 / 日1剂…」），会自动回拼，不必刻意避开</div>'+
+    '<div><i>⑤尾部统计串</i>：（共14味7剂 …）按剔除规则自动清理，可一并框入</div>';
+  function buildBar(){
+    let html='';
+    for(const t of TOOLS) html+=`<button class="tb" data-k="${t.k}" title="${t.name}">${t.ico}</button>`;
+    html+='<span class="sep"></span>';
+    html+='<button class="tb" data-k="undo" title="撤销上一步标注">↩</button>';
+    html+='<button class="tb" data-k="redo" title="重新框选（清空标注）">⟲</button>';
+    html+='<span class="sep"></span>';
+    html+='<button class="tb tcmbtn" data-k="tcm" title="识别框内药味，显示各药品说明 · 用法 · 预判方剂">药</button>';
+    html+='<span class="sep"></span>';
+    html+='<button class="tb ocr" data-k="ocr" title="转文字：本地 OCR 离线识别为文本并打开粘贴框，可编辑后入库分析（生僻药名可能误识）">文</button>';
+    html+='<button class="tb ai" data-k="aiocr" title="AI 识别：云端视觉大模型转录，中药名与剂量更准（需在后台「AI 设置」配置视觉模型，图片将上传至所配模型服务）">AI</button>';
+    html+='<button class="tb no" data-k="cancel" title="取消（右键 / ESC）">✕</button>';
+    html+='<button class="tb ok" data-k="ok" title="确认抓取（入库分析）">✓</button>';
+    bar.innerHTML='<div class="row">'+html+'</div><div id="hint"></div>'+
+      '<div id="tcm"><div id="tcmHead">框内药品详情<span class="hb-b" id="tcmCount"></span></div><div id="tcmBody">'+TCM_HTML+'</div></div>';
+    bar.querySelectorAll('.tb').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();onBar(b.dataset.k);}));
+  }
+  buildBar();
+
+  // ---------- 「药」：实时识别框内药味 → 说明 / 用法 / 预判方剂 ----------
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function renderTcm(res){
+    const body=document.getElementById('tcmBody'); if(!body) return;
+    const cards=res.cards||[], preds=res.preds||[];
+    const cnt=document.getElementById('tcmCount');
+    if(cnt) cnt.textContent = cards.length ? (cards.length+' 味') : '未识别到药味';
+    let h='';
+    if(!cards.length){
+      h+='<div class="hb hb-empty">框内未识别到药味。<br>请框住完整的药味行（含剂量单位 g / 克），再点「药」重新识别。</div>';
+    }
+    for(const c of cards){
+      const b=[];
+      if(c.dose) b.push('<span class="hb-b dose">'+esc(c.dose)+'</span>');
+      if(c.cat)  b.push('<span class="hb-b">'+esc(c.cat)+'</span>');
+      if(c.tox)  b.push('<span class="hb-b tox">有毒</span>');
+      if(c.pre)  b.push('<span class="hb-b pre">孕妇慎</span>');
+      h+='<div class="hb"><div class="hb-h"><span class="hb-n">'+esc(c.n)+'</span>'+b.join('')+'</div>'
+        +'<div class="hb-l"><span class="hb-k">说明</span><span class="hb-v">'+esc((c.prop?c.prop+'；':'')+c.fx)+'</span></div>'
+        +'<div class="hb-l"><span class="hb-k">用法</span><span class="hb-v">'+esc(c.use)+'</span></div>'
+        +(c.note?'<div class="hb-l"><span class="hb-k">注意</span><span class="hb-v">'+esc(c.note)+'</span></div>':'')
+        +'</div>';
+    }
+    if(preds.length){
+      h+='<div class="hb-t">预判方剂<span class="hint">按组成重合度排序 · 仅供参考，须医师核对</span></div>';
+      for(const p of preds){
+        h+='<div class="hb"><div class="hb-h"><span class="hb-n">'+esc(p.n)+'</span>'
+          +'<span class="hb-b dose">重合 '+esc(p.covF+'%')+'</span>'
+          +(p.origin?'<span class="hb-b">'+esc(p.origin)+'</span>':'')+'</div>'
+          +'<div class="hb-l"><span class="hb-k">主治</span><span class="hb-v">'+esc(p.m||(p.s||[]).join('、'))+'</span></div>'
+          +'<div class="hb-l"><span class="hb-k">命中</span><span class="hb-v">'+esc((p.hit||[]).join('、'))+'（'+esc(p.inter)+'/'+esc(p.compSize)+' 味）</span></div>'
+          +(p.miss&&p.miss.length?'<div class="hb-l"><span class="hb-k">缺味</span><span class="hb-v">'+esc(p.miss.join('、'))+'</span></div>':'')
+          +'</div>';
+      }
+    }
+    body.innerHTML=h;
+    placeBar();
+  }
+  function cropRect(){
+    const ratio=bgCv.width/innerWidth;
+    const x=Math.max(0,Math.round(rect.x*ratio)), y=Math.max(0,Math.round(rect.y*ratio));
+    const w=Math.max(1,Math.min(bgCv.width-x, Math.round(rect.w*ratio)));
+    const h=Math.max(1,Math.min(bgCv.height-y, Math.round(rect.h*ratio)));
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    c.getContext('2d').drawImage(bgCv, x,y,w,h, 0,0,w,h);
+    return c.toDataURL('image/png');
+  }
+  async function runTcmCards(){
+    const body=document.getElementById('tcmBody'); if(!body) return;
+    if(!rect) return;
+    if(!bgReady||!bgCv){ body.innerHTML='<div class="hb hb-empty">底图尚未就绪，请稍候 1 秒再点「药」。</div>'; return; }
+    if(tcmBusy) return;
+    const key=Math.round(rect.x)+','+Math.round(rect.y)+','+Math.round(rect.w)+','+Math.round(rect.h);
+    if(tcmLoadedKey===key) return;          // 同一选区已识别过 → 直接复用
+    tcmBusy=true;
+    body.innerHTML='<div class="hb hb-empty">正在识别框内药味…</div>';
+    placeBar();
+    let img='';
+    try{ img=cropRect(); }catch(e){}
+    let res=null;
+    try{ res=await window.qhjf.overlayHerbInfo(img); }catch(e){}
+    tcmBusy=false;
+    if(!res||!res.ok){
+      body.innerHTML='<div class="hb hb-empty">识别失败：'+esc((res&&res.error)||'未知错误')+'。<br>可调整框选范围后重试。</div>';
+      placeBar(); return;
+    }
+    tcmLoadedKey=key;
+    // 用法：优先本次识别抓到的处方用法（外用豁免靠它）
+    if(res.usage) res.usageCache=res.usage;
+    renderTcm(res);
+  }
+  function tcmToggle(){
+    const on=!bar.classList.contains('tcm-on');
+    bar.classList.toggle('tcm-on', on);
+    if(on) runTcmCards(); else placeBar();
+  }
+  function tcmReset(){ tcmLoadedKey=''; const b=document.getElementById('tcmBody'); if(b) b.innerHTML=TCM_HTML; }
+  // 选区被拖动/重框：已识别结果作废；面板开着就等松手后再跑一次（拖动中不做 OCR）
+  function tcmInvalidate(){
+    tcmLoadedKey='';
+    const b=document.getElementById('tcmBody');
+    if(b && bar.classList.contains('tcm-on')) b.innerHTML='<div class="hb hb-empty">选区已改变，松开鼠标后自动重新识别…</div>';
+  }
+  // 提示条随选区实时更新：中药处方最容易漏的就是「用法行」
+  function updateHint(){
+    const el=document.getElementById('hint'); if(!el) return;
+    if(!rect){ el.textContent='框选提示：中药处方请把「药味行」和「用法行」一起框进来'; return; }
+    const w=Math.round(rect.w), h=Math.round(rect.h);
+    if(h<28) el.textContent='选区偏矮（'+h+'px）：HIS 处方常按宽度折行，建议上下各留一行，别把用法行漏在外面';
+    else if(w<120) el.textContent='选区偏窄（'+w+'px）：药味行容易被截断，建议整行框入';
+    else el.textContent='已选 '+w+' × '+h+' px · 请含药味行 + 用法行（每日1剂 / 早晚分服）';
+  }
+  function markTool(){
+    bar.querySelectorAll('.tb').forEach(b=>b.classList.toggle('on', b.dataset.k===tool));
+  }
+  function placeBar(){
+    updateHint();
+    const bw=bar.offsetWidth||420, bh=bar.offsetHeight||46;
+    let x=rect.x+rect.w-bw; if(x<8) x=8;
+    let y=rect.y+rect.h+10;
+    if(y+bh>innerHeight-8) y=Math.max(8, rect.y-bh-10); // 下方放不下 → 选区上方
+    bar.style.left=x+'px'; bar.style.top=y+'px'; bar.style.display='flex';
+    placeTcm();
+  }
+  // 「药」详情面板：独立浮层。优先贴在选区「右侧 → 左侧 → 下方 → 上方」中可用空间最大的一侧，
+  // 正常情况不遮住选区本身；高度按内容撑开（上限 86vh），内容多时可滚、内容少时不硬撑。
+  function placeTcm(){
+    const t=document.getElementById('tcm'); if(!t||!rect) return;
+    const vw=innerWidth, vh=innerHeight, M=8, GAP=10, MIN_W=300;
+    const w=Math.min(560, vw-2*M);
+    const CAP=Math.round(vh*0.86);            // 面板最高占 86% 屏高（原 58vh/0.72 双限太小）
+    const br=bar.getBoundingClientRect();
+
+    // 量内容真实高度：先放开 max-height 再读 scrollHeight。
+    // 注意 position:fixed 元素 offsetParent 恒为 null，必须用 getClientRects 判断是否展开。
+    const shown=t.getClientRects().length>0;
+    let fullH=0;
+    if(shown){
+      const prev=t.style.maxHeight;
+      t.style.maxHeight='none';
+      fullH=t.scrollHeight||0;
+      t.style.maxHeight=prev;
+    }
+    if(!fullH) fullH=CAP;
+
+    // 四向候选：左右侧永不遮选区；上下侧让开工具条
+    const belowTop=Math.max(rect.y+rect.h+GAP, br.bottom+GAP);
+    const spaceRight=vw-M-(rect.x+rect.w+GAP);
+    const spaceLeft=rect.x-GAP-M;
+    const spaceBelow=vh-M-belowTop;
+    const spaceAbove=rect.y-GAP-M;
+    const xFit=Math.min(Math.max(M,rect.x), vw-w-M);
+    const cands=[];
+    if(spaceRight>=MIN_W) cands.push({side:'right', x:rect.x+rect.w+GAP, h:Math.min(fullH,CAP)});
+    if(spaceLeft>=MIN_W)  cands.push({side:'left',  x:rect.x-w-GAP,      h:Math.min(fullH,CAP)});
+    if(spaceBelow>=200)   cands.push({side:'below', x:xFit, y:belowTop,  h:Math.min(fullH,spaceBelow)});
+    if(spaceAbove>=200)   cands.push({side:'above', x:xFit, y:M,          h:Math.min(fullH,spaceAbove)});
+
+    // 择优：能完整放下内容的一侧优先 → 面板更高优先 → 右 > 左 > 下 > 上
+    const order={right:0,left:1,below:2,above:3,corner:4};
+    let best=null;
+    for(const c of cands){
+      const score=(c.h>=fullH?1e6:0) + c.h*100 - order[c.side];
+      if(!best||score>best.score) best=Object.assign({score}, c);
+    }
+    if(!best) best={side:'corner', x:M, y:M, h:Math.min(fullH,CAP)};  // 选区近满屏：四向无空档
+
+    let y;
+    if(best.side==='below'||best.side==='corner') y=best.y;
+    else if(best.side==='above') y=Math.max(M, rect.y-GAP-best.h);    // 底边贴选区顶
+    else{
+      // 侧贴：与选区顶对齐；先横向让开工具条（比上下跳位自然），仍相交才上下挪
+      if(best.side==='right' && best.x<br.right+GAP && br.right+GAP+w<=vw-M) best.x=br.right+GAP;
+      if(best.side==='left'  && best.x+w>br.left-GAP && br.left-GAP-w>=M)   best.x=br.left-GAP-w;
+      y=Math.max(M, Math.min(rect.y, vh-best.h-M));
+      const hit=!(best.x>=br.right || best.x+w<=br.left || y>=br.bottom || y+best.h<=br.top);
+      if(hit){
+        if(br.bottom+GAP+best.h<=vh-M) y=br.bottom+GAP;
+        else if(br.top-GAP-best.h>=M) y=br.top-GAP-best.h;
+        else y=Math.max(M, Math.min(rect.y, vh-best.h-M));
+      }
+    }
+    // 高度夹进视口：既保证不越界，也保证内容多时能占到 86vh
+    const h=Math.max(140, Math.min(best.h, vh-y-M));
+    t.style.left=Math.round(best.x)+'px';
+    t.style.top=Math.round(y)+'px';
+    t.style.width=w+'px';
+    t.style.maxHeight=Math.round(h)+'px';
+  }
+  function onBar(k){
+    if(k==='cancel'){ window.qhjf.overlayCancel(); return; }
+    if(k==='ok'){ confirm(); return; }
+    if(k==='ocr'){ confirm('ocr'); return; }
+    if(k==='aiocr'){ confirm('aiocr'); return; }
+    if(k==='undo'){ strokes.pop(); redraw(); return; }
+    if(k==='redo'){ resetSelect(); return; }
+    if(k==='tcm'){ tcmToggle(); return; }
+    tool=(tool===k)?null:k; markTool();
+    if(tool==='text') tip.textContent='在选区内点击输入文字';
+    else tip.textContent='在选区内拖拽绘制'+(TOOLS.find(t=>t.k===tool)||{name:''}).name;
+  }
+  function resetSelect(){
+    phase='drag'; rect=null; strokes=[]; cur=null; tool=null; drag=null; markTool(); tcmReset();
+    sel.style.display='none'; bar.style.display='none';
+    handles.forEach(h=>h.style.display='none');
+    redraw(); updateHint();
+    tip.textContent='按住左键拖拽框选区域 · 松开后可用工具条标注 · 右键或 ESC 取消';
+  }
+
+  // ---------- 放大镜（对齐腾讯管家：约 4× 取景能看到 2 个完整字 + 蓝色十字线 + 物理像素坐标 + RGB 取色） ----------
+  const mg=document.getElementById('mg'), mgc=document.getElementById('mgc'), mgLabel=document.getElementById('mgLabel');
+  const mgx=mgc.getContext('2d');
+  let bgImg=null, bgCv=null;                 // 底图 + 离屏画布（取色用）
+  const MGZ=4;                               // 放大倍数：136/4=34px 采样宽 ≈ 两个 16px 汉字，可读不马赛克
+  // 底图是出窗之后才抓的（不挡遮罩弹出），到货前先藏提示条，免得它被拍进底图
+  document.body.classList.add('pre');
+  function bgArrived(){ if(bgReady) return; bgReady=true; document.body.classList.remove('pre'); }
+  setTimeout(bgArrived, 1500); // 兜底：抓图失败/超时也要把提示条放出来
+  window.qhjf.onOverlayBg && window.qhjf.onOverlayBg(dataUrl=>{
+    const im=new Image();
+    im.onload=()=>{
+      bgImg=im;
+      bgCv=document.createElement('canvas');
+      bgCv.width=im.naturalWidth; bgCv.height=im.naturalHeight;
+      bgCv.getContext('2d').drawImage(im,0,0);
+      bgArrived();
+    };
+    im.src=dataUrl;
+  });
+  function hex2(v){ return v.toString(16).padStart(2,'0'); }
+  function drawMg(cx,cy){
+    if(!bgImg){ mg.style.display='none'; return; }
+    const ratio=bgImg.naturalWidth/innerWidth;             // 物理/DIP
+    const srcW=mgc.width/MGZ, srcH=mgc.height/MGZ;         // 采样区 34×26 物理px
+    let px=Math.round(cx*ratio), py=Math.round(cy*ratio);  // 光标物理坐标
+    px=Math.max(Math.round(srcW/2),Math.min(bgCv.width-Math.round(srcW/2),px));
+    py=Math.max(Math.round(srcH/2),Math.min(bgCv.height-Math.round(srcH/2),py));
+    mgx.imageSmoothingEnabled=false;
+    mgx.clearRect(0,0,mgc.width,mgc.height);
+    mgx.drawImage(bgImg, px-srcW/2, py-srcH/2, srcW, srcH, 0,0,mgc.width,mgc.height);
+    // 蓝色十字线（对齐腾讯管家）
+    mgx.strokeStyle='rgba(59,118,246,.95)'; mgx.lineWidth=1;
+    mgx.beginPath();
+    mgx.moveTo(mgc.width/2+.5,0); mgx.lineTo(mgc.width/2+.5,mgc.height);
+    mgx.moveTo(0,mgc.height/2+.5); mgx.lineTo(mgc.width,mgc.height/2+.5);
+    mgx.stroke();
+    // 取色
+    let rgb=null;
+    try{ const d=bgCv.getContext('2d').getImageData(px,py,1,1).data; rgb=[d[0],d[1],d[2]]; }catch(e){}
+    mgLabel.textContent='('+px+', '+py+')'+(rgb?'  RGB #'+hex2(rgb[0])+hex2(rgb[1])+hex2(rgb[2]):'');
+    // 摆位：光标右下 22px，越界翻转
+    const bw=mg.offsetWidth||142, bh=mg.offsetHeight||132;
+    let mx=cx+22, my=cy+22;
+    if(mx+bw>innerWidth-8) mx=cx-bw-22;
+    if(my+bh>innerHeight-8) my=cy-bh-22;
+    mg.style.left=Math.max(4,mx)+'px'; mg.style.top=Math.max(4,my)+'px';
+    mg.style.display='block';
+  }
+  function hideMg(){ mg.style.display='none'; }
+
+  // ---------- 框选 / 选中后调整选区 ----------
+  function hitHandle(ev){
+    const t=ev.target;
+    return (t && t.classList && t.classList.contains('hnd')) ? t.dataset.k : null;
+  }
+  // 工具条/把手/文字框属于遮罩自身 UI：按下不当作「重新框选」，交给其 click 处理。
+  // （工具条常摆在选区之外，不排除的话 ✓ / 文 / AI 等按钮会先被 resetSelect 清掉选区而失效）
+  function inOverlayUi(ev){
+    const t=ev.target;
+    if(!t || !t.closest) return false;
+    return !!t.closest('#bar, #txtin, .hnd');
+  }
+  document.addEventListener('mousedown', ev=>{
+    if(ev.button!==0) return;
+    // ① 拖把手 → 调整框选范围（角点改两边，边中点改一边）
+    const hk=(phase==='anno'&&rect)?hitHandle(ev):null;
+    if(hk){ drag={mode:hk, ox:ev.clientX, oy:ev.clientY, r0:{x:rect.x,y:rect.y,w:rect.w,h:rect.h}}; hideMg(); return; }
+    if(inOverlayUi(ev)) return;
+    if(phase==='anno'){
+      // ② 选区外按下 → 直接重新框选（原实现此处不响应，只能点 ⟲）
+      if(!insideRect(ev.clientX,ev.clientY)){
+        resetSelect(); active=true; s={x:ev.clientX,y:ev.clientY}; e=null; return;
+      }
+      if(tool==='text'){ startText(ev.clientX,ev.clientY); return; }
+      if(tool){ cur=startStroke(ev.clientX,ev.clientY); return; }
+      // ③ 选区内、没选标注工具 → 整块平移
+      drag={mode:'move', ox:ev.clientX, oy:ev.clientY, r0:{x:rect.x,y:rect.y,w:rect.w,h:rect.h}};
+      return;
+    }
+    active=true; s={x:ev.clientX,y:ev.clientY}; e=null;
+  });
+  const MIN_SEL=12;
+  function applyDrag(x,y){
+    const dx=x-drag.ox, dy=y-drag.oy, r0=drag.r0, m=drag.mode;
+    const r={x:r0.x,y:r0.y,w:r0.w,h:r0.h};
+    if(m==='move'){ r.x=r0.x+dx; r.y=r0.y+dy; }
+    else{
+      if(m.indexOf('w')>=0){ const nx=Math.max(0,Math.min(r0.x+dx, r0.x+r0.w-MIN_SEL)); r.x=nx; r.w=r0.x+r0.w-nx; }
+      if(m.indexOf('e')>=0){ r.w=Math.max(MIN_SEL,Math.min(innerWidth-r0.x, r0.w+dx)); }
+      if(m.indexOf('n')>=0){ const ny=Math.max(0,Math.min(r0.y+dy, r0.y+r0.h-MIN_SEL)); r.y=ny; r.h=r0.y+r0.h-ny; }
+      if(m.indexOf('s')>=0){ r.h=Math.max(MIN_SEL,Math.min(innerHeight-r0.y, r0.h+dy)); }
+    }
+    // 收进视口
+    r.w=Math.max(MIN_SEL,Math.min(r.w,innerWidth)); r.h=Math.max(MIN_SEL,Math.min(r.h,innerHeight));
+    r.x=Math.max(0,Math.min(r.x,innerWidth-r.w));   r.y=Math.max(0,Math.min(r.y,innerHeight-r.h));
+    rect=r; showSel(); placeBar(); redraw();
+    tcmInvalidate();   // 选区变了，已识别的药味卡片作废
+  }
+  document.addEventListener('mousemove', ev=>{
+    if(drag){ hideMg(); applyDrag(ev.clientX,ev.clientY); return; }
+    if(phase==='drag'){ drawMg(ev.clientX,ev.clientY); if(active){ e={x:ev.clientX,y:ev.clientY}; drawSel(); } }
+    else if(phase==='anno'&&cur){ hideMg(); moveStroke(ev.clientX,ev.clientY); }
+    else hideMg();
+  });
+  window.addEventListener('mouseup', ev=>{
+    if(drag){ drag=null; showSel(); placeBar(); if(bar.classList.contains('tcm-on')) runTcmCards(); return; }
+    if(phase==='drag'&&active){
+      active=false;
+      if(e && Math.abs(e.x-s.x)>8 && Math.abs(e.y-s.y)>8){
+        rect=nr(s,e); phase='anno'; active=false; tcmReset();
+        showSel(); placeBar();
+        if(bar.classList.contains('tcm-on')) runTcmCards();
+        tip.textContent='拖动选区可移动 · 拖把手调范围 · 选区外拖拽可重新框选 · 右键或 ESC 取消';
+      } else { sel.style.display='none'; }
+    } else if(phase==='anno'&&cur){ commitStroke(); }
+  });
+  // 右键取消（任意阶段）
+  document.addEventListener('contextmenu', ev=>{ ev.preventDefault(); window.qhjf.overlayCancel(); });
+  window.addEventListener('keydown', ev=>{ if(ev.key==='Escape') window.qhjf.overlayCancel(); });
+
+  function insideRect(x,y){ return rect && x>=rect.x&&x<=rect.x+rect.w&&y>=rect.y&&y<=rect.y+rect.h; }
+  function nr(a,b){ return { x:Math.min(a.x,b.x), y:Math.min(a.y,b.y), w:Math.abs(a.x-b.x), h:Math.abs(a.y-b.y) }; }
+  function drawSel(){
+    const r=nr(s,e);
+    sel.style.display='block';
+    sel.style.left=r.x+'px'; sel.style.top=r.y+'px';
+    sel.style.width=r.w+'px'; sel.style.height=r.h+'px';
+    dim.textContent=Math.round(r.w)+' × '+Math.round(r.h)+' px';
+  }
+  function showSel(){
+    sel.style.display='block';
+    sel.style.left=rect.x+'px'; sel.style.top=rect.y+'px';
+    sel.style.width=rect.w+'px'; sel.style.height=rect.h+'px';
+    dim.textContent=Math.round(rect.w)+' × '+Math.round(rect.h)+' px';
+    HANDLE_POS.forEach((p,i)=>{
+      const h=handles[i]; if(!h) return;
+      h.style.display='block';
+      h.style.left=(rect.x+(rect.w*p[0])-6)+'px';
+      h.style.top=(rect.y+(rect.h*p[1])-6)+'px';
+    });
+  }
+
+  // ---------- 标注绘制 ----------
+  function startStroke(x,y){
+    const base={type:tool,color,x0:clipX(x),y0:clipY(y),x1:clipX(x),y1:clipY(y),pts:[]};
+    if(tool==='pen'||tool==='mosaic') base.pts=[[x,y]];
+    return base;
+  }
+  function moveStroke(x,y){
+    if(!cur) return;
+    if(cur.pts.length){ cur.pts.push([x,y]); }
+    else { cur.x1=clipX(x); cur.y1=clipY(y); }
+    redraw(cur);
+  }
+  function commitStroke(){
+    if(cur){ if(cur.pts.length>1||Math.abs(cur.x1-cur.x0)>2||Math.abs(cur.y1-cur.y0)>2) strokes.push(cur); cur=null; redraw(); }
+  }
+  function clipX(x){ return Math.max(rect.x,Math.min(rect.x+rect.w,x)); }
+  function clipY(y){ return Math.max(rect.y,Math.min(rect.y+rect.h,y)); }
+
+  function redraw(live){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.save();
+    // 裁剪到选区
+    if(rect){ ctx.beginPath(); ctx.rect(rect.x,rect.y,rect.w,rect.h); ctx.clip(); }
+    for(const st of strokes) drawStroke(st);
+    if(live) drawStroke(live);
+    ctx.restore();
+  }
+  function drawStroke(st){
+    ctx.strokeStyle=st.color; ctx.fillStyle=st.color; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.lineCap='round';
+    if(st.type==='rect'){ ctx.strokeRect(st.x0,st.y0,st.x1-st.x0,st.y1-st.y0); }
+    else if(st.type==='ellipse'){
+      ctx.beginPath();
+      ctx.ellipse((st.x0+st.x1)/2,(st.y0+st.y1)/2,Math.abs(st.x1-st.x0)/2,Math.abs(st.y1-st.y0)/2,0,0,Math.PI*2);
+      ctx.stroke();
+    }
+    else if(st.type==='arrow'){
+      ctx.beginPath(); ctx.moveTo(st.x0,st.y0); ctx.lineTo(st.x1,st.y1); ctx.stroke();
+      const ang=Math.atan2(st.y1-st.y0,st.x1-st.x0), L=12;
+      ctx.beginPath(); ctx.moveTo(st.x1,st.y1);
+      ctx.lineTo(st.x1-L*Math.cos(ang-0.45),st.y1-L*Math.sin(ang-0.45));
+      ctx.lineTo(st.x1-L*Math.cos(ang+0.45),st.y1-L*Math.sin(ang+0.45));
+      ctx.closePath(); ctx.fill();
+    }
+    else if(st.type==='pen'){
+      ctx.beginPath(); st.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke();
+    }
+    else if(st.type==='mosaic'){
+      // 用放大位移噪声模拟马赛克：半透明灰块序列
+      ctx.fillStyle='rgba(128,128,128,.85)';
+      const cell=8;
+      for(const p of st.pts){ ctx.fillRect(Math.round((p[0]-cell/2)/cell)*cell, Math.round((p[1]-cell/2)/cell)*cell, cell, cell); }
+    }
+    else if(st.type==='text'){
+      ctx.font='16px "Microsoft YaHei",sans-serif';
+      const lines=String(st.text||'').split('\n');
+      lines.forEach((ln,i)=>ctx.fillText(ln, st.x0, st.y0+i*20));
+    }
+  }
+
+  // ---------- 文字 ----------
+  let txtPt=null;
+  function startText(x,y){
+    txtPt={x:clipX(x),y:clipY(y)};
+    txtin.style.left=txtPt.x+'px'; txtin.style.top=(txtPt.y-10)+'px';
+    txtin.style.display='block'; txtin.value=''; txtin.focus();
+  }
+  txtin.addEventListener('keydown',ev=>{
+    ev.stopPropagation();
+    if(ev.key==='Enter'&&txtin.value.trim()){
+      strokes.push({type:'text',color,x0:txtPt.x,y0:txtPt.y+14,text:txtin.value});
+      txtin.style.display='none'; txtin.value=''; redraw();
+    } else if(ev.key==='Escape'){ txtin.style.display='none'; }
+  });
+  txtin.addEventListener('blur',()=>{ txtin.style.display='none'; });
+
+  // ---------- 确认 ----------
+  async function confirm(mode){
+    const withAnno=strokes.length>0;
+    try{ await window.qhjf.overlaySelected(rect, withAnno, {ocr:mode==='ocr', ai:mode==='aiocr'}); }catch(err){}
+  }
+
+  // 确认抓取前：主进程要求隐藏遮罩只留笔迹（笔迹需进入截屏）；clearAll=转文字模式连笔迹一起清空
+  window.qhjf.onStrip && window.qhjf.onStrip((clearAll)=>{
+    bar.style.display='none'; sel.style.display='none';
+    handles.forEach(h=>h.style.display='none');
+    tip.style.display='none'; document.getElementById('cancel').style.display='none';
+    txtin.style.display='none'; hideMg(); bar.classList.remove('tcm-on');
+    if(clearAll){ strokes=[]; cur=null; redraw(); }
+  });
+</script>
+</body>
+</html>

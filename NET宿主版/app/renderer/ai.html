@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>岐黄鉴方 · AI 问药</title>
+<style>
+  :root{--topbar:#123f28;--ink:#17241c;--mut:#5d7067;--line:#dce5e0;--card:#fff;--green:#1d6f4b;--deep:#123f28;--amber:#b9760f;--soft:#e7f1eb;--bg:#f4f7f5}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);font-size:13.5px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  .top{height:50px;flex:none;background:var(--topbar);color:#e6f1ea;display:flex;align-items:center;padding:0 16px;gap:10px}
+  .top .t1{font-family:KaiTi,serif;font-size:18px;letter-spacing:1px}
+  .top .t2{font-size:11px;opacity:.78}
+  .top .mdl{font-size:10.5px;border:1px solid rgba(159,227,176,.5);color:#c9f2d0;border-radius:10px;padding:2px 9px;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .top .sp{flex:1}
+  .top button{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);color:#e6f1ea;border-radius:7px;padding:5px 11px;font-size:11.5px;cursor:pointer}
+  .top button:hover{background:rgba(255,255,255,.24)}
+  #msgs{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+  .msg{max-width:84%;padding:9px 13px;border-radius:12px;line-height:1.85;white-space:normal;word-break:break-word;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .msg.user{align-self:flex-end;background:var(--green);color:#eff6ea;border-bottom-right-radius:3px}
+  .msg.ai{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-bottom-left-radius:3px;color:#2c3830}
+  .msg.ai.err{border-color:#eec9c4;background:#fdf3f1;color:#8a3329}
+  .msg .who{font-size:10px;color:#93a49a;margin-bottom:2px}
+  .msg.user .who{color:#bfe3c4}
+  .msg pre{background:#f2f4e8;border:1px solid #e5ede9;border-radius:7px;padding:8px 11px;font-family:Consolas,Monaco,monospace;font-size:12px;overflow-x:auto;margin:6px 0;color:#333}
+  .msg .md-table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;line-height:1.6}
+  .msg .md-table th,.msg .md-table td{border:1px solid #dae2db;padding:4px 8px;text-align:left;vertical-align:top}
+  .msg .md-table th{background:#eef4f1;font-weight:600;color:#123f28;white-space:nowrap}
+  .msg .md-table tr:nth-child(even) td{background:#f7f5ec}
+  .msg code{background:#e5ede9;border-radius:4px;padding:0 5px;color:#1d6f4b;font-size:12px;font-family:Consolas,monospace}
+  .msg h3,.msg h4,.msg h5{margin:8px 0 3px;color:var(--deep)}
+  .msg h3{font-size:13.5px;border-left:3px solid var(--amber);padding-left:8px}
+  .msg h4{font-size:12.5px}.msg h5{font-size:12px}
+  .msg p{margin:4px 0}
+  .msg ul,.msg ol{margin:4px 0;padding-left:20px}
+  .msg blockquote{color:var(--mut);border-left:3px solid #d3ded8;padding-left:9px;margin:5px 0;font-size:12px}
+  .refs{font-size:10.5px;color:#8a6a15;background:#faf4e0;border:1px solid #f0dcb0;border-radius:7px;padding:5px 10px;margin-top:7px}
+  .busy{display:inline-flex;gap:5px;align-items:center}
+  .busy .d{width:6px;height:6px;border-radius:50%;background:#8fd9a0;animation:bl 1s infinite}
+  .busy .d:nth-child(2){animation-delay:.18s}.busy .d:nth-child(3){animation-delay:.36s}
+  @keyframes bl{50%{opacity:.2}}
+  /* AI 分析进度条：只走真实里程碑（准备上下文 → 请求/返回 → 渲染） */
+  .aprog .ahd{display:flex;align-items:baseline;gap:8px;font-size:12.5px;color:var(--deep)}
+  .aprog .ahd .lb{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .aprog .ahd .pc{font-size:14px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums}
+  .aprog .tk{height:10px;border-radius:6px;background:#e7ece0;border:1px solid #d5ddc9;overflow:hidden;margin:9px 0 6px;position:relative}
+  .aprog .br{height:100%;border-radius:6px;background:var(--green);position:relative;transition:width .5s cubic-bezier(.2,.7,.3,1)}
+  .aprog .br::after{content:"";position:absolute;inset:0;border-radius:6px;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.6) 50%,transparent 75%);background-size:220% 100%;animation:capshine 1.5s linear infinite}
+  @keyframes capshine{from{background-position:120% 0}to{background-position:-120% 0}}
+  .aprog .afl{font-size:10.5px;color:var(--mut)}
+  .aprog .afl b{color:var(--green);font-variant-numeric:tabular-nums}
+  .quick{flex:none;display:flex;gap:8px;padding:10px 16px 4px;flex-wrap:wrap}
+  .quick .q{font-size:11.5px;border:1px solid #cdd8bd;background:var(--card);color:#3d4a34;border-radius:14px;padding:5px 12px;cursor:pointer;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .quick .q:hover{border-color:var(--green);color:var(--green);background:var(--soft)}
+  .bar{flex:none;display:flex;gap:8px;padding:10px 16px 14px;align-items:flex-end}
+  .bar textarea{flex:1;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px;outline:none;resize:none;height:44px;line-height:1.6;background:var(--card);color:var(--ink);font-family:inherit}
+  .bar textarea:focus{border-color:var(--green)}
+  .bar button{height:44px;width:74px;border:0;border-radius:10px;background:var(--green);color:#eef6ea;font-size:13.5px;cursor:pointer;flex:none}
+  .bar button:hover{filter:brightness(1.08)}
+  .bar button:disabled{opacity:.5;cursor:not-allowed}
+  .foot{flex:none;font-size:10px;color:#a8aa97;text-align:center;padding:0 12px 8px}
+</style>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+<div class="top">
+  <span class="t1">岐黄鉴方</span><span class="t2">· AI 问药 · 云端智能</span>
+  <span class="mdl" id="mdl" title="当前模型 / 配置状态">模型：读取中…</span>
+  <div class="sp"></div>
+  <button onclick="window.qhjf.openAdmin()">⚙ 模型设置</button>
+</div>
+<div id="msgs"></div>
+<div class="quick" id="quick"></div>
+<div class="bar">
+  <textarea id="inp" placeholder="问药、问方、辨证求因… Enter 发送，Shift+Enter 换行"></textarea>
+  <button id="send">发送</button>
+</div>
+<div class="foot">AI 内容仅供学习参考，需经执业医师核对 · 对话内容仅本机使用，按云端模型隐私政策传输</div>
+<script src="md.js"></script>
+<script>
+  const api = window.qhjf;
+  const msgs = document.getElementById('msgs');
+  const inp = document.getElementById('inp');
+  const sendBtn = document.getElementById('send');
+  const QUICK = [
+    '咳嗽痰白清稀、怕冷，适合什么方？',
+    '乏力、纳差、便溏、舌淡胖——怎么辨证调理？',
+    '细辛、附子、半夏一起用要注意什么？',
+    '补阳还五汤的组成与主治？',
+    '更年期潮热汗出、心烦失眠怎么办？',
+    '「十八反」具体指哪些药？'
+  ];
+
+  let busy = false;
+  function addMsg(role, html, cls) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + role + (cls ? ' ' + cls : '');
+    div.innerHTML = '<div class="who">' + (role === 'user' ? '我' : '岐黄鉴方 · AI') + '</div>' + html;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+  function greeting() {
+    addMsg('ai', '<p>我是<b>岐黄鉴方 AI</b>，可为你：</p><ul><li>解读<b>病历内涵质控</b>提示（点击记录面板的“AI 解读”生成）</li><li>做<b>中医辨证推理</b>：症状 → 证型 → 治法 → 方剂</li><li>对处方做<b>安全性核查</b>与患者教育话术</li><li>结合本地 266 味中药 / 100+ 首方剂做<b>知识问答</b></li></ul><p>试试下方快捷问题 👇</p>');
+  }
+  function fillQuick() {
+    const q = document.getElementById('quick');
+    q.innerHTML = QUICK.map(t => `<span class="q" title="${t}">${t}</span>`).join('');
+    q.querySelectorAll('.q').forEach(el => el.onclick = () => { inp.value = el.textContent; doSend(); });
+  }
+
+  function busyBubble() {
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'bubble';
+    div.innerHTML = '<div class="who">岐黄鉴方 · AI</div>'
+      + '<div class="aprog"><div class="ahd"><span class="lb" id="aiProgLabel">准备分析上下文（脱敏文本 + 规则引擎结果）…</span><span class="pc"><span id="aiProgPct">6</span>%</span></div>'
+      + '<div class="tk"><div class="br" id="aiProgBar" style="width:6%"></div></div>'
+      + '<div class="afl">已用 <b id="aiProgElapsed">0</b> 秒</div></div>';
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    aiProgTimerStart();
+    // 真实里程碑事件 → 进度条（AI 层上报的 prep/request/round/done，不做假爬升）
+    if (api.onAiProgress) api.onAiProgress(p => {
+      if (!p || typeof p.pct !== 'number') return;
+      const bar = document.getElementById('aiProgBar'); if (!bar) return;
+      const pct = Math.max(0, Math.min(100, p.pct));
+      bar.style.width = pct + '%';
+      const pc = document.getElementById('aiProgPct'); if (pc) pc.textContent = String(pct);
+      const lb = document.getElementById('aiProgLabel'); if (lb && p.label) lb.textContent = p.label;
+    });
+  }
+  let aiProgTimer = null, aiProgT0 = 0;
+  function aiProgTimerStart() {
+    aiProgStopTimer(); aiProgT0 = Date.now();
+    const tick = () => {
+      const el = document.getElementById('aiProgElapsed');
+      if (!el) { aiProgStopTimer(); return; }   // 气泡已被回复替换 → 计时器自动收摊
+      el.textContent = String(Math.max(0, Math.round((Date.now() - aiProgT0) / 1000)));
+    };
+    tick(); aiProgTimer = setInterval(tick, 1000);
+  }
+  function aiProgStopTimer() { if (aiProgTimer) { clearInterval(aiProgTimer); aiProgTimer = null; } }
+  function clearBusy() { aiProgStopTimer(); const b = document.getElementById('bubble'); if (b) b.remove(); }
+
+  async function doSend() {
+    const question = inp.value.trim();
+    if (!question || busy) return;
+    if (question.length > 2000) { alert('问题过长（2000 字内）'); return; }
+    busy = true; sendBtn.disabled = true;
+    addMsg('user', '<p>' + String(question).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</p>');
+    inp.value = '';
+    busyBubble();
+    let r;
+    try { r = await api.aiRun('ask', { question: question }); }
+    catch (e) { r = { ok: false, error: e.message }; }
+    clearBusy();
+    if (r && r.ok) {
+      const html = window.MD.render(r.answer);
+      const refs = (r.refs && r.refs.length)
+        ? '<div class="refs">📚 参考（本地库）：' + r.refs.map(x => x.kind + '·' + x.name).join('；') + '</div>'
+        : '';
+      addMsg('ai', html + (r.mock ? '' : refs));
+    } else {
+      const err = (r && r.error) || '未知错误';
+      addMsg('ai', '<p>' + String(err).replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</p><p>👉 点右上角「模型设置」填写 API Key 后重试。</p>', 'err');
+    }
+    busy = false; sendBtn.disabled = false;
+    inp.focus();
+  }
+
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(); }
+  });
+  sendBtn.onclick = doSend;
+
+  (async function init() {
+    greeting(); fillQuick();
+    try {
+      const c = await api.aiConfigGet();
+      const m = document.getElementById('mdl');
+      if (c && c.hasKey) m.textContent = '模型：' + (c.modelLabel || (c.model || '-')) + (c.mock ? '（演示模式）' : '');
+      else {
+        m.textContent = c && c.mock ? '演示模式（AI_MOCK）' : '未配置 API Key';
+        m.style.borderColor = 'rgba(240,193,100,.6)'; m.style.color = '#ffe9b0';
+      }
+    } catch (e) { /* ignore */ }
+  })();
+</script>
+</body>
+</html>

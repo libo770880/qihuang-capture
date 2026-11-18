@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>粘贴采集</title>
+<style>
+  :root{--topbar:#123f28;--ink:#17241c;--mut:#5d7067;--line:#dce5e0;--card:#fff;--green:#1d6f4b;--deep:#123f28;--amber:#b9760f;--soft:#e7f1eb;--bg:#f4f7f5;--red:#a53a2e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;background:var(--bg);color:var(--ink);font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  .bar{-webkit-app-region:drag;height:42px;background:var(--topbar);color:#e6f1ea;display:flex;align-items:center;padding:0 14px;gap:10px;flex:none}
+  .bar b{font-size:14px}
+  .bar i{font-style:normal;opacity:.75;font-size:12px}
+  .bar .sp{flex:1}
+  .bar button{-webkit-app-region:no-drag;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);color:#e6f1ea;border-radius:6px;width:26px;height:24px;cursor:pointer;font-size:12px;line-height:1}
+  .bar button:hover{background:rgba(255,255,255,.26)}
+  .wrap{flex:1;display:flex;flex-direction:column;padding:10px 12px;gap:8px;min-height:0}
+  .hint{color:var(--mut);font-size:12px}
+  .hint b{color:var(--green)}
+  textarea{flex:none;height:150px;resize:vertical;border:1px solid var(--line);border-radius:8px;background:var(--card);padding:8px 10px;font:12.5px/1.7 Consolas,"Microsoft YaHei",monospace;color:var(--ink);outline:none}
+  textarea:focus{border-color:var(--green)}
+  .seghead{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:12px}
+  .seghead .n{color:var(--green);font-weight:600}
+  .seghead .drop{color:var(--amber)}
+  .segs{flex:1;overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--card);padding:6px}
+  .seg{display:flex;gap:8px;padding:3px 8px;border-radius:5px;align-items:baseline}
+  .seg:nth-child(odd){background:var(--soft)}
+  .seg .no{flex:none;width:26px;text-align:right;color:var(--mut);font-size:11px}
+  .seg .tx{word-break:break-all;line-height:1.6}
+  .seg.tag .tx{color:#b5ae9c;text-decoration:line-through}
+  .seg.tag .no::after{content:" ✂"}
+  .empty{color:#b5ae9c;text-align:center;padding:26px 0;font-size:12px}
+  .foot{flex:none;display:flex;gap:8px;align-items:center}
+  .foot .msg{flex:1;font-size:12px;color:var(--red);min-height:16px}
+  .foot .msg.ok{color:var(--green)}
+  /* OCR 识别进度条（转文字/屏幕文字通道） */
+  .ocrprog{display:none;flex:none;align-items:center;gap:10px;background:var(--soft);border:1px solid #d5ddc2;border-radius:8px;padding:7px 12px}
+  .ocrprog .ring{flex:none;width:16px;height:16px;border-radius:50%;border:2.5px solid #dbe5cc;border-top-color:var(--green);animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ocrprog .olab{flex:1;font-size:12px;color:#3d4a34;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ocrprog .opct{flex:none;font-size:13px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums}
+  .ocrprog .track{flex:none;width:130px;height:7px;border-radius:5px;background:#e2e8d2;overflow:hidden}
+  .ocrprog .obar{height:100%;width:4%;border-radius:5px;background:var(--green);position:relative;transition:width .18s linear}
+  .ocrprog .obar::after{content:"";position:absolute;inset:0;border-radius:5px;background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.55) 50%,transparent 75%);background-size:220% 100%;animation:shine 1.5s linear infinite}
+  @keyframes shine{0%{background-position:180% 0}100%{background-position:-60% 0}}
+  .ocrprog .otip{flex-basis:100%;font-size:10.5px;color:#8a927e;height:14px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .4s}
+  .ocrprog .otip.fade{opacity:0}
+  button.bt{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:7px;padding:7px 14px;font-size:13px;cursor:pointer}
+  button.bt:hover{background:var(--soft)}
+  button.go{background:var(--green);border-color:var(--green);color:#fff;font-weight:600;min-width:110px}
+  button.go:hover{background:var(--deep)}
+  button.go:disabled{opacity:.55;cursor:default}
+</style>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+  <div class="bar" id="drag">
+    <b>粘贴采集</b><i>Ctrl+C 复制 → 这里 Ctrl+V 粘贴 · 零误差</i>
+    <span class="sp"></span>
+    <button id="btnMin" title="最小化">─</button>
+    <button id="btnClose" title="关闭">✕</button>
+  </div>
+  <div class="wrap">
+    <div class="ocrprog" id="ocrprog">
+      <div class="ring"></div><div class="olab" id="olab">准备识别…</div>
+      <div class="track"><div class="obar" id="obar"></div></div><div class="opct"><span id="opct">0</span>%</div>
+      <div class="otip" id="otip"></div>
+    </div>
+    <div class="hint">第①步：在医院系统里<b>选中病历/医嘱文字 → Ctrl+C</b>；第②步：在下方输入框 <b>Ctrl+V 粘贴</b>，右侧自动划行分段并剔除界面标签行；第③步：点<b>「入库分析」</b>。</div>
+    <textarea id="txt" placeholder="在此 Ctrl+V 粘贴病历 / 医嘱文本…" spellcheck="false"></textarea>
+    <div class="seghead">自动划行分段预览：<span class="n" id="cnt">0 行</span><span class="drop" id="drop"></span></div>
+    <div class="segs" id="segs"><div class="empty">粘贴后此处自动按行分段（灰底删除线 = HIS 界面标签行，入库时自动剔除）</div></div>
+    <div class="foot">
+      <button class="bt" id="btnClear">清空</button>
+      <button class="bt" id="btnClip" title="把剪贴板内容填入下方（等价手动 Ctrl+V）">📋 读剪贴板</button>
+      <span class="msg" id="msg"></span>
+      <button class="bt go" id="btnGo">入库分析</button>
+    </div>
+  </div>
+<script>
+  const txt = document.getElementById('txt');
+  const segs = document.getElementById('segs');
+  const cnt = document.getElementById('cnt');
+  const drop = document.getElementById('drop');
+  const msg = document.getElementById('msg');
+  const btnGo = document.getElementById('btnGo');
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  document.getElementById('btnClose').onclick = () => window.qhjf.pasteClose();
+  document.getElementById('btnMin').onclick = () => window.qhjf.pasteClose();
+  document.getElementById('btnClear').onclick = () => { txt.value=''; render(); txt.focus(); };
+  document.getElementById('btnClip').onclick = async () => {
+    try { const t = await window.qhjf.clipboardRead(); txt.value = t || ''; render(); msg.textContent = t ? '' : '剪贴板为空'; }
+    catch(e){ msg.textContent = '读取失败：' + e.message; }
+    txt.focus();
+  };
+
+  // 自动划行分段：噪声行过滤与主进程入库同一套规则（noise.filterNoiseText），预览即所见
+  let tmr = null;
+  txt.addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(render, 160); });
+
+  function render(){
+    const raw = txt.value;
+    if(!raw.trim()){ segs.innerHTML = '<div class="empty">粘贴后此处自动按行分段（灰底删除线 = HIS 界面标签行，入库时自动剔除）</div>'; cnt.textContent='0 行'; drop.textContent=''; return; }
+    // 分段/噪声判定走主进程（paste:segment），与入库管线同一套 lib/noise 规则——预览即所见
+    window.qhjf.pasteSegment(raw).then(r => {
+      const rows = (r && r.rows) || [];
+      cnt.textContent = (r ? r.kept : 0) + ' 行';
+      drop.textContent = (r && r.removed) ? ' · 自动剔除标签行 ' + r.removed : '';
+      segs.innerHTML = rows.length
+        ? rows.map((x,i)=>'<div class="seg'+(x.tag?' tag':'')+'"><span class="no">'+(x.tag?'—':i+1)+'</span><span class="tx">'+esc(x.text)+'</span></div>').join('')
+        : '<div class="empty">没有有效内容行</div>';
+    }).catch(err => { segs.innerHTML = '<div class="empty">预览失败：'+esc(err.message)+'</div>'; });
+  }
+
+  async function submit(){
+    const t = txt.value;
+    if(!t.trim()){ msg.textContent='请先粘贴内容'; return; }
+    btnGo.disabled = true; msg.className='msg'; msg.textContent='解析入库中…';
+    try{
+      const r = await window.qhjf.pasteSubmit(t);
+      if(r && r.ok){
+        msg.className='msg ok'; msg.textContent='已入库 ✓ 面板已打开';
+        // 主进程会关闭本窗口并弹出记录面板
+      } else {
+        msg.textContent = (r && r.error) || '入库失败';
+        btnGo.disabled = false;
+      }
+    }catch(e){ msg.textContent = '入库失败：' + e.message; btnGo.disabled = false; }
+  }
+  btnGo.onclick = submit;
+  document.addEventListener('keydown', e=>{
+    if((e.ctrlKey||e.metaKey) && e.key==='Enter'){ e.preventDefault(); submit(); }
+    if(e.key==='Escape'){ window.qhjf.pasteClose(); }
+  });
+  txt.focus();
+  // 屏幕文字（离线）预填：框选识字结果直接进粘贴框，医生核对/编辑后入库
+  window.qhjf.onPastePrefill(t => {
+    txt.value = String(t || '');
+    render();
+    msg.className = 'msg ok';
+    msg.textContent = txt.value ? '已识别框选区域文字，请核对后入库' : '';
+  });
+  // 屏幕文字（离线）状态提示：识别中 / 失败原因（框选后立即反馈，不再有无反馈空窗）
+  window.qhjf.onPasteHint(t => {
+    msg.className = 'msg';
+    msg.textContent = String(t || '');
+  });
+
+  // ===== OCR 识别进度条（转文字/屏幕文字通道）：平滑追赶 + 停滞爬行 + 友好提示轮播 =====
+  const ocrprog=document.getElementById('ocrprog'), obar=document.getElementById('obar'),
+        opct=document.getElementById('opct'), olab=document.getElementById('olab'), otip=document.getElementById('otip');
+  let oTarget=6, oDisp=0, oCrawl=null, oTipT=null;
+  const OTIPS=['全程离线识别，数据不出本机','首次识别需加载语言包，之后秒开','正在智能纠正药名与剂量…','识别完成后可直接编辑再入库','框选范围稍大一点，识别更完整'];
+  (function oLoop(){
+    if(ocrprog.style.display==='flex'){
+      if(oDisp<oTarget) oDisp+=(oTarget-oDisp)*0.14+0.3;
+      else if(oDisp<95) oDisp+=0.05;
+      if(oDisp>100) oDisp=100;
+      obar.style.width=oDisp+'%'; opct.textContent=Math.round(oDisp);
+    }
+    requestAnimationFrame(oLoop);
+  })();
+  function oTipsStart(){
+    let i=Math.floor(Math.random()*OTIPS.length);
+    clearInterval(oTipT);
+    const show=()=>{ otip.classList.add('fade'); setTimeout(()=>{ otip.innerHTML='<b>✦</b> '+OTIPS[i%OTIPS.length]; otip.classList.remove('fade'); i++; },350); };
+    show(); oTipT=setInterval(show,3200);
+  }
+  window.qhjf.onPasteProgress(d => {
+    d = d || {};
+    if (d.pct >= 100 || d.done) { oTarget=100; oDisp=100; setTimeout(()=>{ ocrprog.style.display='none'; clearInterval(oCrawl); clearInterval(oTipT); }, 350); return; }
+    // 新一轮识别：进度条已收起 或 新目标远低于当前显示值（上一轮残留 100%）→ 归零重走
+    if (ocrprog.style.display !== 'flex' || (Number(d.pct) || 0) < oDisp - 20) oDisp = 0;
+    ocrprog.style.display='flex';
+    oTarget=Math.max(3,Math.min(99,Number(d.pct)||0));
+    if(d.label) olab.textContent=d.label;
+    oTipsStart();
+  });
+  // 预填到达 = 识别结束，收起进度条（独立监听，与上方预填处理互不影响）
+  window.qhjf.onPastePrefill(() => {
+    oTarget = oDisp = 100;
+    setTimeout(() => { ocrprog.style.display = 'none'; clearInterval(oCrawl); clearInterval(oTipT); }, 300);
+  });
+</script>
+</body>
+</html>

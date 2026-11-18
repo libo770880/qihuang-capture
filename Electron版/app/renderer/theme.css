@@ -1,0 +1,356 @@
+/* ==========================================================================
+   岐黄鉴方 · 统一设计系统（Modern Flat）
+   --------------------------------------------------------------------------
+   加载位置：必须在各页面内联 <style> 之后 —— 本文件是「覆盖层」，
+   负责统一调色板、去拟物装饰、以及组件级的现代扁平视觉语言。
+
+   约束（改动时务必遵守）：
+   1. 只重定「视觉」，不删除 / 重命名任何既有选择器 —— 页面的 JS 模板与
+      .NET 端到端探针（--probe-ui / --probe-admin / --probe-overlay）都依赖它们。
+   2. 悬浮 UI（floatball / hud / overlay）不引入本文件 —— 它们是透明浮层，
+      全局 body 背景会破坏 transparent 窗口的命中测试。
+   ========================================================================== */
+
+:root {
+  /* —— 品牌：墨绿色阶（保留中医辨识度，明度/饱和度重新校准） —— */
+  --deep: #123f28;                 /* 最深：标题、深色按钮 */
+  --brand1: #123f28;               /* 旧：渐变起点（已去渐变，仅兼容引用） */
+  --brand2: #1d6f4b;               /* 旧：渐变终点 */
+  --green: #1d6f4b;                /* 主色 */
+  --green-600: #175c3e;
+  --green-100: #e4f2ea;
+  --green-50: #f1f9f5;
+
+  /* —— 中性面：米黄纸感 → 冷绿灰（更干净、更现代） —— */
+  --bg: #f4f7f5;
+  --card: #ffffff;
+  --card2: #f8fbfa;
+  --ink: #17241c;
+  --mut: #5d7067;
+  --line: #dce5e0;
+  --hov: #eef4f1;
+  --soft: #e7f1eb;
+  --track: #e5ede9;
+
+  /* —— 语义色 —— */
+  --amber: #b9760f;
+  --red: #bf3a2f;
+  --blue: #2563eb;
+  --purple: #6a5cb0;
+
+  /* —— 形状：统一四档圆角 —— */
+  --r-xs: 5px;
+  --r-sm: 7px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+
+  /* —— 阴影：极淡、近 epidermis 的层叠感 —— */
+  --sh-1: 0 1px 2px rgba(16, 42, 28, .05);
+  --sh-2: 0 2px 10px rgba(16, 42, 28, .07);
+  --sh-3: 0 12px 32px rgba(16, 42, 28, .14);
+
+  /* —— 字体 —— */
+  --ff: "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei",
+        "Segoe UI", system-ui, -apple-system, sans-serif;
+  --ff-brand: KaiTi, STKaiti, "Kaiti SC", "SimSun", serif;   /* 仅品牌标题，留中式笔意 */
+  --ff-num: "DIN Alternate", "Bahnschrift", "Segoe UI", ui-monospace, Consolas, monospace;
+
+  /* —— 字号：整体抬一档，层级更清晰 —— */
+  --fs-xs: 11.5px;
+  --fs-sm: 12.5px;
+  --fs-md: 13.5px;
+  --fs-lg: 15px;
+  --fs-xl: 18px;
+  --fs-2xl: 22px;
+  --lh: 1.65;
+}
+
+/* ============================ 全局基础 ============================ */
+html, body { font-family: var(--ff); }
+body {
+  font-size: var(--fs-md);
+  line-height: var(--lh);
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection { background: #cde7db; color: var(--deep); }
+
+/* 数字统一等宽，表格/统计对齐更整齐 */
+.db-metric .v, .rec .tm, .fr .fv, [class*="count"], b, i[data-n] { font-variant-numeric: tabular-nums; }
+
+/* 现代滚动条：细、淡、悬浮加深 */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #cbd9d1; border-radius: 6px;
+  border: 2px solid transparent; background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: #aec2b7; background-clip: padding-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* 表单：统一焦点环（现代、无障碍） */
+input, textarea, select, button { font-family: inherit; font-size: inherit; }
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible {
+  outline: 2px solid var(--green); outline-offset: 1px;
+}
+
+/* ======================== 去拟物：渐变全部抹平 ======================== */
+.top, .cap, .comp .ch, .tcm .tch, .aic .aih, .block .bh,
+.rmh, .bar .go, .fhd, .panel-hd, .hd, .sec-h {
+  background-image: none !important;
+}
+
+/* 顶栏：纯色墨绿 + 细底边，取代双色斜向渐变 */
+.top {
+  background: var(--topbar, #123f28) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, .18);
+  box-shadow: none !important;
+}
+.top .t1 { font-family: var(--ff-brand); font-size: var(--fs-xl); letter-spacing: 2px; }
+.top .t2 { opacity: .72; font-size: var(--fs-xs); }
+.top button {
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: var(--r-sm);
+  transition: background .14s ease, border-color .14s ease;
+}
+.top button:hover { background: rgba(255, 255, 255, .22); border-color: rgba(255, 255, 255, .34); }
+
+/* 侧栏「快速采集」块：由墨绿渐变面 → 白底 + 墨绿主按钮（扁平化核心改动） */
+.cap {
+  background: var(--card) !important;
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+.cap .cap-t { color: var(--mut); opacity: 1; }
+.cap .cap-t::before { background: var(--green); width: 3px; height: 12px; border-radius: 2px; }
+.cap .capb {
+  background: var(--card2) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--ink) !important;
+  border-radius: var(--r-sm);
+  transition: background .13s ease, border-color .13s ease;
+}
+.cap .capb:hover { background: var(--hov) !important; border-color: #c3d6cc !important; }
+.cap .capb.main {
+  background: var(--green) !important;
+  border-color: var(--green) !important;
+  color: #fff !important;
+  box-shadow: none;
+}
+.cap .capb.main:hover { background: var(--green-600) !important; border-color: var(--green-600) !important; }
+.cap .cap-h { color: #93a49a; opacity: 1; }
+
+/* ======================== 列表：卡片化、舒展 ======================== */
+.rec {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  transition: background .12s ease;
+}
+.rec:hover { background: var(--hov); }
+.rec.sel {
+  background: var(--green-50);
+  box-shadow: inset 3px 0 0 var(--green) !important;
+}
+.rec .tm { font-size: var(--fs-sm); color: var(--deep); }
+.rec .src, .rec .cnt { color: #849590; }
+
+/* 徽章：统一扁平（淡底 + 深字 + 细边框） */
+.tag, .chip, .bdg, .hchip, .fchip {
+  border-radius: var(--r-xs) !important;
+  border: 1px solid transparent;
+  font-variant-numeric: tabular-nums;
+}
+.tag { background: var(--track); color: #4d6357; border-color: #cfdcd5; }
+.tag.window { background: #eaf2fd; color: #1b5fae; border-color: #cbdff8; }
+.tag.region { background: #e3f4ee; color: #0e7256; border-color: #a9e0cf; }
+.tag.uia { background: #fceef4; color: #a1345c; border-color: #f5c6d6; }
+.tag.clipboard { background: #fdf5e6; color: #8a5a12; border-color: #f0d7a8; }
+
+/* ======================== 卡片：纯白 + 细边 + 微影 ======================== */
+.dhead, .tcm, .comp, .aic, .db-card, .db-metric, .hmodal, .hcard {
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--sh-1) !important;
+}
+.dhead { padding: 18px 22px 14px; margin-bottom: 16px; }
+.dhead .dt { font-family: var(--ff-brand); font-size: var(--fs-xl); letter-spacing: 1px; }
+.dhead .dm { font-size: var(--fs-sm); color: var(--mut); }
+.dact { border-top: 1px solid var(--line); padding-top: 13px; }
+
+/* 区块容器（正文 / 处方 / 合规 等） */
+.block { border: 1px solid var(--line) !important; border-radius: var(--r-md) !important; }
+.block .bh {
+  background: var(--soft) !important;
+  border-bottom: 1px solid var(--line);
+  padding: 10px 16px;
+  letter-spacing: .3px;
+}
+.block pre { line-height: 1.8; color: #2c3830; }
+.block.rxedit { border-color: #cfdcd5 !important; }
+
+/* 处方网格：单味药输入单元更舒展 */
+.rxgrid { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)); gap: 6px 8px; padding: 10px 13px; }
+.rxrow {
+  background: var(--card2); border: 1px solid var(--line);
+  border-radius: var(--r-sm); padding: 3px 7px;
+  transition: border-color .13s ease, background .13s ease;
+}
+.rxrow:focus-within { border-color: var(--green); background: var(--card); }
+.rxrow input { font-size: var(--fs-sm); }
+.rxrow .rxd { color: var(--mut); }
+
+/* ======================== 卡片区块头（合规 / 方剂 / AI） ======================== */
+.comp .ch { background: #fbf8ee !important; border-bottom: 1px solid var(--line); padding: 11px 16px; }
+.comp .ch .sc { background: #fbeecb; color: #8a6a15; border-radius: 11px; }
+.tcm .tch { background: var(--soft) !important; border-bottom: 1px solid var(--line); }
+.tcm .tch .tt { font-family: var(--ff-brand); font-size: var(--fs-lg); }
+.tcm .tsec { border-left: 3px solid var(--amber); color: #4d6357; }
+.aic { border: 1px solid #dcd7f0 !important; }
+.aic .aih { background: #f2f0fa !important; border-bottom: 1px solid #e3dff3; }
+.aic .aih .tt { font-family: var(--ff-brand); color: #3a2f6e; }
+
+/* 条款条目：去掉暖黄分隔与装饰点阴影 */
+:is(.comp, .rxs) .it { padding: 9px 16px; border-bottom: 1px solid var(--line); }
+:is(.comp, .rxs) .it:last-child { border-bottom: 0; }
+:is(.comp, .rxs) .dot { box-shadow: none !important; }
+:is(.comp, .rxs) .it.incompat {
+  background: #fdf0ee; border-left: 3px solid var(--red);
+}
+:is(.comp, .rxs) .it .bd .d { color: var(--mut); }
+:is(.comp, .rxs) .it .bd .v { color: #166b45; }
+.comp .foot, .tcm .foot { border-top: 1px solid var(--line); color: #93a49a; }
+
+/* 方剂卡 */
+.fcard {
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-md) !important;
+  background: var(--card2);
+}
+.fcard.rec { border-color: #c3e0d0 !important; background: #f4fbf7; }
+.fcard.guess { border-color: #ecd9a8 !important; background: #fffcf4; }
+.fn { font-family: var(--ff-brand); }
+.fkind { border-radius: var(--r-xs); }
+.fctx { color: #93a49a; }
+
+/* 组成药块 */
+.cing .ci { background: var(--soft); border: 1px solid #d3e2d9; border-radius: var(--r-sm); }
+.cing .ci .cn { color: #33402f; }
+.cing .ci .cd { color: #8a6a15; }
+.cing .ci.has:hover { box-shadow: var(--sh-1); border-color: #cbb27a; }
+
+/* ======================== 按钮 ======================== */
+button, .ghost, .rxb, .fchip, .opt-toggle button {
+  transition: background .13s ease, border-color .13s ease, color .13s ease, box-shadow .13s ease;
+}
+/* .ghost 全局基线：任何容器（含数据看板标题、弹窗底部）都不再落到浏览器原生按钮样式 */
+.ghost {
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 5px 14px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  cursor: pointer;
+}
+.ghost:hover { border-color: var(--green); color: var(--green); background: var(--green-50); }
+.ghost:active { background: var(--green-100); }
+.ghost:disabled { opacity: .55; cursor: default; }
+.ghost:disabled:hover { border-color: var(--line); color: var(--ink); background: var(--card2); }
+/* 主操作：实底主色（保存并重新审方 / 保存） */
+.ghost.primary { background: var(--green); border-color: var(--green); color: #fff; }
+.ghost.primary:hover { background: var(--green-600); border-color: var(--green-600); color: #fff; }
+.dact .ghost { border-radius: var(--r-sm); padding: 5px 13px; }
+.dact .ghost:hover { border-color: var(--green); color: var(--green); background: var(--green-50); }
+.rxb { border-radius: var(--r-sm); }
+.rxb.primary { background: var(--green); border-color: var(--green); }
+.rxb.primary:hover { background: var(--green-600); border-color: var(--green-600); }
+.revbtn, .herbs-btn, .gbtn { border-radius: var(--r-sm); }
+
+/* 切换组（ segmented control ）：更规整 */
+.opt-toggle { background: var(--track); border: 1px solid var(--line); border-radius: var(--r-sm); }
+.opt-toggle button { border-radius: var(--r-xs); padding: 4px 13px; }
+.opt-toggle button.on { background: var(--green); color: #fff; }
+
+/* ======================== 表单 ======================== */
+.srch input, .search input, input[type="text"], input[type="search"], input[type="password"],
+input[type="number"], select, textarea {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--card2);
+  padding: 6px 11px;
+  transition: border-color .13s ease, box-shadow .13s ease;
+}
+.srch input:focus, .search input:focus, input[type="text"]:focus, input[type="search"]:focus,
+input[type="password"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(29, 111, 75, .10);
+  background: var(--card);
+}
+.srch input::placeholder, input::placeholder, textarea::placeholder { color: #9db0a6; }
+
+/* ======================== 后台：导航与布局 ======================== */
+/* 导航已改为左侧竖排 + 分组折叠（分组色 --gc/--gcs 在 admin.html 内联定义，
+   顶栏 --topbar 由 switchView 按当前分组实时切换，实现「上方主题色随分组联动」） */
+.tabs {
+  background: var(--card);
+  border-right: 1px solid var(--line);
+  border-bottom: 0;
+  padding: 8px;
+  gap: 1px;
+}
+.tab {
+  padding: 6px 9px 6px 18px;
+  font-size: var(--fs-sm);
+  color: var(--mut);
+  border-left: 2.5px solid transparent;
+  border-bottom: 0;
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  transition: color .13s ease, background .13s ease;
+}
+.tab:hover { color: var(--green); background: var(--hov); }
+.tab.on { color: var(--gc, var(--green)); background: var(--gcs, var(--soft)); border-left-color: var(--gc, var(--green)); font-weight: 700; }
+
+.left, .side { background: var(--card); border-right: 1px solid var(--line); }
+.search { padding: 13px 15px; border-bottom: 1px solid var(--line); }
+
+/* ======================== 表格 ======================== */
+table { border-collapse: separate; border-spacing: 0; }
+th {
+  font-weight: 700; color: var(--deep); font-size: var(--fs-sm);
+  background: var(--soft); border-bottom: 1px solid var(--line);
+}
+td { border-bottom: 1px solid var(--line); }
+tbody tr:hover td { background: var(--hov); }
+
+/* ======================== 遮罩与弹窗 ======================== */
+.hmask { background: rgba(16, 32, 24, .40); }
+.hmodal {
+  background: var(--card);
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--sh-3) !important;
+}
+.hmodal .hmh { background: var(--soft) !important; border-bottom: 1px solid var(--line); }
+.hmodal .hmh .hmt { color: var(--deep); }
+.hmodal .hmr { border-bottom: 1px dashed var(--line); }
+.hmodal .hmr .hml { color: #93a49a; }
+.hmodal .hmr .hmv { color: #2c3830; }
+
+/* 空态 */
+.empty { color: #93a49a; font-size: var(--fs-lg); }
+.empty .big { font-family: var(--ff-brand); color: #c3d6cc; font-size: 42px; }
+
+/* 提示条 */
+.note { background: #fdf8ec; border: 1px solid #f0d7a8; color: #7a5a14; border-radius: var(--r-sm); }
+
+/* 审查结论徽章（verdict / seal 周边） */
+.verdict, .seal b { letter-spacing: 1px; }
+
+/* ======================== 主区留白（更「大气」） ======================== */
+.main { padding: 26px 34px 40px; }
+.dwrap { max-width: 980px; margin: 0 auto; position: relative; }

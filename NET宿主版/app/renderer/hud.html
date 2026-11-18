@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;font-family:"Microsoft YaHei",sans-serif;user-select:none}
+  .card{margin:8px;padding:16px 20px 14px;border-radius:16px;background:rgba(252,253,248,.98);border:1px solid #cfd8c2;box-shadow:0 14px 44px rgba(30,50,20,.30)}
+  .hd{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+  .ring{flex:none;width:26px;height:26px;border-radius:50%;border:3px solid #dbe5cc;border-top-color:#4c7d3f;animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .lab{font-size:14px;color:#26331f;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pctb{flex:none;font-size:17px;font-weight:700;color:#3f7a34;font-variant-numeric:tabular-nums}
+  .track{height:10px;border-radius:7px;background:#e7ecdb;overflow:hidden;position:relative}
+  .bar{height:100%;width:6%;border-radius:7px;background:#1d6f4b;position:relative;transition:width .18s linear}
+  .bar::after{content:"";position:absolute;inset:0;border-radius:7px;
+    background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.55) 50%,transparent 75%);
+    background-size:220% 100%;animation:shine 1.5s linear infinite}
+  @keyframes shine{0%{background-position:180% 0}100%{background-position:-60% 0}}
+  .tip{font-size:11px;color:#8a927e;margin-top:9px;height:15px;line-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .4s}
+  .tip.fade{opacity:0}
+  .tip b{color:#5c7a4a;font-weight:600}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="hd"><div class="ring"></div><div class="lab" id="lab">正在采集…</div><div class="pctb"><span id="pct">0</span>%</div></div>
+  <div class="track"><div class="bar" id="bar"></div></div>
+  <div class="tip" id="tip"></div>
+</div>
+<script>
+// —— 平滑追赶 + 停滞爬行：真实事件给目标值，显示值每帧逼近；无事件时缓慢爬行避免“冻住”感 ——
+let target=6, disp=0, crawlT=null, tipT=null;
+const TIPS=[
+  '提示：框选范围稍大一点，识别更完整',
+  '全程离线识别，病历数据不出本机',
+  '小知识：首次识别需加载语言包，之后秒开',
+  '正在智能纠正药名与剂量（如 128→12g）…',
+  '识别完成后可直接在面板编辑处方',
+  '支持拼音/首字母检索知识库（如 hq→黄芪）'
+];
+const bar=document.getElementById('bar'), pct=document.getElementById('pct'),
+      lab=document.getElementById('lab'), tip=document.getElementById('tip');
+function loop(){
+  // 追赶目标 + 缓慢爬行（上限 95%，等真实事件推进）
+  if(disp<target) disp+=(target-disp)*0.14+0.25;
+  else if(disp<95) disp+=0.06;
+  if(disp>100) disp=100;
+  bar.style.width=disp+'%';
+  pct.textContent=Math.round(disp);
+  requestAnimationFrame(loop);
+}
+loop();
+function startCrawl(){ clearInterval(crawlT); crawlT=setInterval(()=>{ if(target<92) target+=0.8; },900); }
+function startTips(){
+  let i=Math.floor(Math.random()*TIPS.length);
+  const show=()=>{ tip.classList.add('fade'); setTimeout(()=>{ tip.innerHTML='<b>✦</b> '+TIPS[i%TIPS.length]; tip.classList.remove('fade'); i++; },400); };
+  show(); clearInterval(tipT); tipT=setInterval(show,3600);
+}
+// 新一轮采集重置：窗口复用会残留上一轮的 100%，重置后再从 0 追赶
+window.__resetProg=function(){
+  disp=0; target=6;
+  bar.style.width='0%'; pct.textContent='0';
+  lab.textContent='正在采集…';
+  clearInterval(crawlT); clearInterval(tipT);
+  startCrawl(); startTips();
+};
+window.__setProg=function(p,label){
+  target=Math.max(2,Math.min(100,Number(p)||0));
+  // 防窗口复用残留：显示值远高于新目标 → 必是新一轮采集，归零重走
+  if(disp>target+20) disp=0;
+  if(target>=99){ disp=Math.max(disp,target); }
+  if(label) lab.textContent=label;
+};
+startCrawl(); startTips();
+</script>
+</body>
+</html>

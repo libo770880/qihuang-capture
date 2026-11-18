@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="wdQLWDnMCuvn0ArvPRcDJg">
+<head data-page-node-id="2mkKw7tmPYAROCsPre8SAn">
+<meta charset="UTF-8" data-page-node-id="UlOIKe0qPsyln6DJjLoWQw">
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;user-select:none;-webkit-user-select:none;font-family:"Microsoft YaHei",sans-serif;}
+  /* ===== 状态A：56px 悬浮球（点击展开面板，本身不截图） ===== */
+  #view-ball{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
+  #ball{width:56px;height:56px;border-radius:50%;position:relative;
+    background:#1d6f4b;
+    box-shadow:0 3px 10px rgba(0,0,0,.28), inset 0 0 0 1.5px rgba(190,225,170,.55);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-family:KaiTi,"SimSun",serif;color:#fff;transition:transform .08s ease;}
+  #ball:active{transform:scale(.92)}
+  #ball .ring{position:absolute;inset:-3px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.25);animation:spin 14s linear infinite;pointer-events:none}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #txt{font-size:24px;line-height:1}
+  #hint{position:absolute;top:3px;right:3px;width:9px;height:9px;border-radius:50%;background:#7fdb8a;
+    box-shadow:0 0 0 2px rgba(127,219,138,.4);opacity:0;transition:opacity .2s}
+  #view-ball.loading #hint{opacity:1;background:#f5c25d}
+  #view-ball.busy #hint{opacity:1;background:#e05d4f;animation:blink .5s infinite}
+  @keyframes blink{50%{opacity:.25}}
+
+  /* ===== 状态B：操作面板（截图须点击面板内的"截图抓取"按钮） ===== */
+  #view-menu{position:fixed;inset:0;background:transparent;display:none;}
+  .menu{position:absolute;inset:0;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;
+    background:#123f28;
+    box-shadow:0 6px 22px rgba(0,0,0,.45), inset 0 0 0 1px rgba(190,225,170,.28);}
+  .head{display:flex;align-items:center;justify-content:space-between;padding:11px 12px 7px;flex:none;}
+  .head .t{color:#d9ecd0;font-size:12.5px;letter-spacing:1px;display:flex;align-items:baseline;gap:4px;}
+  .head .t b{color:#a4e7b5;font-family:KaiTi,"SimSun",serif;font-size:16px;font-weight:700;}
+  .head .t i{font-style:normal;font-size:10px;color:#7f9f87;letter-spacing:0;}
+  .x{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+    color:#a9c6a8;font-size:12px;cursor:pointer;}
+  .x:hover{background:rgba(255,255,255,.14);color:#fff}
+  .items{flex:1;padding:2px 9px 6px;display:flex;flex-direction:column;gap:4px;min-height:0;}
+  .item{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:10px;cursor:pointer;
+    background:rgba(255,255,255,.045);border:1px solid transparent;flex:1;}
+  .item:hover{background:rgba(140,215,160,.17);border-color:rgba(170,225,180,.42)}
+  .item:active{transform:scale(.985)}
+  .item .ic{width:28px;height:28px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;
+    background:#1d6f4b;color:#eaffef;font-size:14px;}
+  .item .tx{flex:1;min-width:0;line-height:1.3;}
+  .item .tx .a{color:#eef7e9;font-size:13px;}
+  .item .tx .b{color:#8fb394;font-size:10.5px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .item .go{color:#6f9a78;font-size:12px;flex:none;}
+  .item.quit{margin-top:3px;flex:none;justify-content:center;gap:6px;
+    background:rgba(198,76,60,.16);border-color:rgba(226,120,106,.45)}
+  .item.quit .ic{width:22px;height:22px;border-radius:6px;font-size:11px;
+    background:#bf3a2f;color:#ffe3de}
+  .item.quit .tx{flex:none}
+  .item.quit .tx .a{color:#ffc9bd;font-size:12.5px}
+  .item.quit .go{color:#c97762;font-size:11px}
+  .item.quit:hover{background:rgba(206,84,66,.3);border-color:rgba(240,150,135,.65)}
+  .item.quit:hover .tx .a{color:#ffe3db}
+  .status{flex:none;min-height:24px;padding:3px 13px 9px;font-size:11.5px;color:#ffb08a;display:none;
+    align-items:center;gap:6px;line-height:1.4;}
+  .status.show{display:flex}
+  .status .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none;opacity:.9}
+</style>
+<style id="flatTheme">
+/* ===== 扁平主题（红蓝）覆盖：悬浮球 + 菜单 ===== */
+html.flat #ball{background:#2563eb;box-shadow:0 3px 10px rgba(0,0,0,.28), inset 0 0 0 1.5px rgba(190,215,255,.55)}
+html.flat #hint{background:#7fb0ff}
+html.flat .menu{background:#123f28;box-shadow:0 6px 22px rgba(0,0,0,.45), inset 0 0 0 1px rgba(130,165,255,.28)}
+html.flat .head .t{color:#dbe6ff}
+html.flat .head .t b{color:#aecbff}
+html.flat .head .t i{color:#8296c9}
+html.flat .x{color:#a9b8dd}
+html.flat .item:hover{background:rgba(120,160,255,.17);border-color:rgba(130,165,255,.42)}
+html.flat .item .ic{background:#2563eb;color:#eaf1ff}
+html.flat .item .tx .b{color:#93a5d4}
+html.flat .item .go{color:#7f97cf}
+html.flat .item.quit .ic{background:#bf3a2f}
+</style>
+<script>try{if(localStorage.getItem('qhjf.theme')==='flat')document.documentElement.classList.add('flat');}catch(e){}</script>
+</head>
+<body data-page-node-id="BVPjb47wuPyIkL6SPEJ1ke">
+
+<!-- 悬浮球（收起态） -->
+<div id="view-ball" data-page-node-id="RZiKacJLioBL3pfVm15tYD">
+  <div id="ball" title="点击展开采集菜单" data-page-node-id="X1JIvdDxfCAZoQLZDArxMR"><span id="txt" data-page-node-id="T10hkCF8VLFTgf6FoSUXkV">岐</span><span id="hint" data-page-node-id="xMASnf17TvAtxZlGpmNg0Z"></span><span class="ring" data-page-node-id="tZkFYjQcAUoEFiiVAKKlMS"></span></div>
+</div>
+
+<!-- 操作面板（展开态） -->
+<div id="view-menu" data-page-node-id="5T08g5F0hPkG9EvEKVtpry">
+  <div class="menu" data-page-node-id="7KdLtWgrdk80kHQEYkXiU8">
+    <div class="head" data-page-node-id="JVfD6IfT5EQNBKkys1YsXA">
+      <span class="t" data-page-node-id="3rGkfL8YFpZCAsFnspydyc"><b data-page-node-id="wEfxlITpqVSCnKiVh8PC3G">岐黄鉴方</b><i data-page-node-id="SUqPOcFGbBRuLILf2bmXel">悬浮采集</i></span>
+      <span class="x" id="btnClose" title="收起" data-page-node-id="tH3pGPCpzORIVWoSzBBifR">✕</span>
+    </div>
+    <div class="items" data-page-node-id="LbekxCWB8Sf027PkTBj5RY">
+      <div class="item" data-act="clip" title="弹出粘贴框：医院系统 Ctrl+C → 粘贴框里 Ctrl+V → 入库（或直接按 Ctrl+Alt+V），零识别误差">
+        <div class="ic" style="background:#b9760f">文</div>
+        <div class="tx"><div class="a">粘贴采集</div><div class="b">Ctrl+V 粘贴入库 · 零误差</div></div>
+        <div class="go">›</div>
+      </div>
+      <div class="item" data-act="region" title="在全屏遮罩上拖框，只抓框选内容" data-page-node-id="sRDqei8Bxrd2HpWHDZ0FaQ">
+        <div class="ic" data-page-node-id="qntAThCnTHOCqZ2TKCBR6c">▭</div>
+        <div class="tx" data-page-node-id="dj3K1R4IcrS2E3njZPrJWn"><div class="a" data-page-node-id="DAvPhZpmqZIl4GWbaFGXmt">框选抓取</div><div class="b" data-page-node-id="1ScSCPlEL4qxch8AICgdNq">拖框选取局部内容</div></div>
+        <div class="go" data-page-node-id="eYShd1jY0zoD0ZDqQ2wDzX">›</div>
+      </div>
+      <div class="item" data-act="screentext" title="拖框后离线识别文字（tesseract.js，无 Python/网络依赖），先预览核对再入库">
+        <div class="ic" style="background:#2c6ca8">屏</div>
+        <div class="tx"><div class="a">屏幕文字</div><div class="b">拖框识字 → 核对后入库</div></div>
+        <div class="go">›</div>
+      </div>
+      <div class="item" data-act="panel" title="查看采集历史、原文/脱敏、导出" data-page-node-id="CB2xKli4FHRZWauIfQoZ35">
+        <div class="ic" data-page-node-id="itvzQaJqztFRVZRNfIsnpR">▤</div>
+        <div class="tx" data-page-node-id="XGq1TfV5CFhlTFKDQZSp4C"><div class="a" data-page-node-id="g9ldrrIqppTz4BEKvsyf2o">记录面板</div><div class="b" data-page-node-id="5An8ZMW0HsBRHRbpGbH0aU">历史 / 脱敏 / 导出</div></div>
+        <div class="go" data-page-node-id="zhEV5UAmBHBhtzVHr9F2Du">›</div>
+      </div>
+      <div class="item" data-act="consult" title="未截图也能辨证：选诊断/证型/症状 → 推荐方 + 合规提示">
+        <div class="ic" style="background:#1d6f4b">脉</div>
+        <div class="tx"><div class="a">辨证咨询</div><div class="b">诊断 / 证型 / 症状</div></div>
+        <div class="go">›</div>
+      </div>
+      <div class="item" data-act="search" title="随时检索中药/方剂：名称、功效、主治、来源">
+        <div class="ic">搜</div>
+        <div class="tx"><div class="a">知识检索</div><div class="b">中药 / 方剂 / 来源</div></div>
+        <div class="go">›</div>
+      </div>
+      <div class="item" data-act="ai" title="云端智能：辨证问答 / 处方点评 / 知识问答">
+        <div class="ic" style="background:#6a5cb0">✦</div>
+        <div class="tx"><div class="a">AI 问药</div><div class="b">辨证 / 点评 / 问答</div></div>
+        <div class="go">›</div>
+      </div>
+      <div class="item" data-act="admin" title="导入/编辑中药与方剂知识库">
+        <div class="ic">⚙</div>
+        <div class="tx"><div class="a">后台管理</div><div class="b">中药 / 方剂 / 导入</div></div>
+        <div class="go">›</div>
+      </div>
+      <div class="item quit" data-act="quit" title="退出岐黄鉴方">
+        <div class="ic">退</div>
+        <div class="tx"><div class="a">退出应用</div></div>
+        <div class="go">›</div>
+      </div>
+    </div>
+    <div class="status" id="status" data-page-node-id="gTRaszy4nC87wcf5m1EdsU"><span class="dot" data-page-node-id="N7IGewRNjIeWv03rZACqWM"></span><span id="statusTxt" data-page-node-id="3xDni0IRcQHUFE9Sig1yuX"></span></div>
+  </div>
+</div>
+
+<script>
+  const viewBall = document.getElementById('view-ball');
+  const viewMenu = document.getElementById('view-menu');
+  const ball = document.getElementById('ball');
+  const txt = document.getElementById('txt');
+  const statusEl = document.getElementById('status');
+  const statusTxt = document.getElementById('statusTxt');
+
+  let expanded = false;
+  let busy = false;
+
+  // ---- 两态切换：小球(56) ⇄ 操作面板(214×252) ----
+  function setView(exp) {
+    if (expanded === exp) return;
+    expanded = exp;
+    viewBall.style.display = exp ? 'none' : 'flex';
+    viewMenu.style.display = exp ? 'block' : 'none';
+    window.qhjf.setBallExpanded(exp); // 主进程调整窗口尺寸/位置
+  }
+
+  function setBusy(b) {
+    busy = b;
+    viewBall.classList.toggle('busy', b);
+  }
+
+  function showStatus(text, isErr) {
+    statusTxt.textContent = text;
+    statusEl.style.color = isErr ? '#ffa07d' : '#8fd9a0';
+    statusEl.classList.add('show');
+  }
+  function clearStatus() { statusEl.classList.remove('show'); }
+
+  // ---- 悬浮球拖拽（主进程驱动，渲染层只负责开始/结束与点击抑制） ----
+  // 注意：drag-start 必须在「确认拖动（>3px）」后才发——mousedown 就启动会让普通点击也进入
+  // 拖拽轮询，菜单展开后窗口被轮询拽走且 mouseup 不结束，表现为菜单乱飞、无法点击。
+  // 点击抑制的时序：click 事件在 mouseup 之后触发，因此 mouseup 里【不能】清 suppressClick，
+  // 否则拖动结束松手时 click 仍会到达小球 → 拖一下就弹出菜单。保留标记，由 click 消费后复位。
+  let downX = 0, downY = 0, suppressClick = false, dragging = false;
+  ball.addEventListener('mousedown', e => {
+    downX = e.screenX; downY = e.screenY; suppressClick = false; dragging = false;
+  });
+  function endDrag() {
+    if (dragging) { dragging = false; window.qhjf.ballDragEnd(); } // suppressClick 留给 click 消费
+  }
+  window.addEventListener('mouseup', endDrag);
+  window.addEventListener('blur', endDrag);
+  window.addEventListener('mousemove', e => {
+    // 拖动中左键已松开：兜底结束拖动（主进程高频移动窗口时 mouseup 可能被吞，
+    // 不兜底的话 dragging 卡 true —— 球粘在鼠标上、点击也失效）
+    if (dragging && !(e.buttons & 1)) { endDrag(); return; }
+    if (!(e.buttons & 1) || expanded || busy) return;
+    const dx = e.screenX - downX, dy = e.screenY - downY;
+    if ((Math.abs(dx) > 3 || Math.abs(dy) > 3) && !dragging) {
+      suppressClick = true; dragging = true;
+      window.qhjf.ballDragStart(); // 确认是拖动才启动主进程跟随
+    }
+  });
+  ball.addEventListener('click', () => {
+    if (suppressClick || dragging) { suppressClick = false; return; } // 拖动结束：吞掉本次 click
+    if (!busy && !expanded) { clearStatus(); setView(true); } // 单击只展开菜单，不截图
+  });
+
+  // ---- 操作按钮：点击才执行采集 ----
+  document.querySelectorAll('.item').forEach(it => {
+    it.addEventListener('click', async () => {
+      if (busy) return;
+      const act = it.dataset.act;
+      if (act === 'panel') { clearStatus(); setView(false); window.qhjf.openPanel(); return; }
+      if (act === 'admin') { clearStatus(); setView(false); window.qhjf.openAdmin(); return; }
+      if (act === 'search') { clearStatus(); setView(false); window.qhjf.openSearch(); return; }
+      if (act === 'consult') { clearStatus(); setView(false); window.qhjf.openConsult(); return; }
+      if (act === 'ai') { clearStatus(); setView(false); window.qhjf.openAi(); return; }
+      if (act === 'quit') { window.qhjf.quit(); return; }
+      clearStatus();
+      setView(false);          // 先收起为小球
+      setBusy(true);           // 小球状态点变红（处理中）
+      try {
+        if (act === 'clip') { setBusy(false); window.qhjf.openPasteBox(); } // 粘贴采集：弹粘贴框手动 Ctrl+V
+        else if (act === 'region') window.qhjf.startRegion();
+        else if (act === 'screentext') window.qhjf.startScreentext();
+      } finally {
+        setBusy(false);
+      }
+    });
+  });
+
+  async function runAndReport(promise) {
+    const r = await promise;
+    if (r && r.ok) {
+      flashBall('✓');
+      setTimeout(() => window.qhjf.openPanel(), 450); // 采集成功自动打开记录面板
+    } else {
+      setView(true); // 失败回到面板，展示原因
+      showStatus((r && r.error) || '采集失败，请重试', true);
+    }
+  }
+
+  function flashBall(mark) {
+    txt.textContent = mark;
+    txt.style.color = mark === '✓' ? '#9fe3b0' : '#ff9a7d';
+    setTimeout(() => { txt.textContent = '岐'; txt.style.color = '#fff'; }, 900);
+  }
+
+  // ---- 收起 ----
+  document.getElementById('btnClose').addEventListener('click', () => { clearStatus(); setView(false); });
+  viewMenu.addEventListener('mousedown', e => {
+    if (!e.target.closest('.menu')) setView(false); // 点击面板圆角外透明处收起
+  });
+</script>
+</body>
+</html>
