@@ -1105,6 +1105,22 @@
   <div class="imp" style="gap:14px">
     <div style="display:flex;flex-direction:column;gap:14px;flex:1;max-width:520px;min-width:0">
       <div class="card" style="flex:none">
+        <h3>软件更新</h3>
+        <div class="desc" id="updCur">正在读取版本信息…</div>
+        <div class="desc" style="margin-top:2px">更新包来自 GitHub Release，下载后自动校验 SHA-256。更新只覆盖程序文件，采集记录、知识库与账号（data.db、userdata）保持不动。</div>
+        <div class="cbtns">
+          <button class="btn primary" id="updCheckBtn" onclick="updCheck(false)">检查更新</button>
+          <button class="btn primary" id="updDlBtn" style="display:none" onclick="updDownload()">下载更新包</button>
+          <button class="btn primary" id="updApplyBtn" style="display:none" onclick="updApply()">重启并完成更新</button>
+          <button class="btn" onclick="updOpenPage()">打开发布页</button>
+        </div>
+        <div id="updPwrap" style="display:none;margin-top:10px;height:6px;background:#e8efea;border-radius:99px;overflow:hidden">
+          <div id="updPbar" style="height:100%;width:0;background:var(--green);transition:width .18s"></div>
+        </div>
+        <div class="result" id="updSt"></div>
+        <div id="updNotes" style="display:none;margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fafcfb;font-size:12px;line-height:1.85;color:#4a5348;max-height:220px;overflow:auto;white-space:pre-wrap"></div>
+      </div>
+      <div class="card" style="flex:none">
         <h3>软件信息与登录模式</h3>
         <div class="desc">软件名称显示在面板 / 后台标题处；开启前台账号密码登录后，记录面板需使用下方人员账号登录。</div>
         <div class="frow"><span class="flb">软件名称</span><input id="sysName" placeholder="岐黄鉴方" maxlength="30" spellcheck="false"></div>
@@ -3057,6 +3073,82 @@ refreshAll();
 syncYbMap();
 
 
+// ================= 软件更新（GitHub Releases） =================
+// 主进程/宿主侧实现见 lib/updater.js 与 net/QhjfCapture/Domain/Update.cs（两宿主行为镜像）
+let updMeta = null;      // update:info 结果（版本 / 宿主 / 发布页）
+let updLatest = null;    // update:check 结果（最新版本 / 说明 / 资产）
+let updZip = '';         // 已下载并通过校验的更新包路径
+
+function updFmt(n) { n = Number(n) || 0; return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+
+async function updInit() {
+  try { updMeta = await api.updateInfo(); } catch (e) { updMeta = null; }
+  const el = document.getElementById('updCur'); if (!el) return;
+  if (!updMeta || !updMeta.ok) { el.textContent = '当前宿主未提供更新接口（旧版本程序）'; return; }
+  el.innerHTML = '当前版本 <b>v' + esc(updMeta.version) + '</b> · 宿主 ' + (updMeta.host === 'net' ? '.NET 宿主版' : 'Electron 版')
+    + (updMeta.portable ? '' : ' · <span style="color:#a0613f">开发态：只检查不安装</span>');
+}
+
+async function updCheck(silent) {
+  const st = document.getElementById('updSt');
+  const btn = document.getElementById('updCheckBtn');
+  if (btn) btn.disabled = true;
+  if (!silent) { st.textContent = '正在检查更新…'; st.style.color = '#6a705f'; }
+  let r = null;
+  try { r = await api.updateCheck(); } catch (e) { r = null; }
+  if (btn) btn.disabled = false;
+  if (!r || !r.ok) {
+    if (!silent) st.innerHTML = '<span class="err">检查失败：' + esc((r && r.error) || '接口不可用') + '</span>';
+    return;
+  }
+  updLatest = r; updZip = '';
+  document.getElementById('updNotes').style.display = 'none';
+  document.getElementById('updDlBtn').style.display = 'none';
+  document.getElementById('updApplyBtn').style.display = 'none';
+  if (!r.hasUpdate) { st.innerHTML = '<span class="ok">已是最新版本 v' + esc(r.current) + '</span>'; return; }
+  st.innerHTML = '<b style="color:#a0613f">发现新版本 v' + esc(r.latest) + '</b>（当前 v' + esc(r.current) + '）'
+    + (r.publishedAt ? ' · 发布于 ' + esc(r.publishedAt) : '')
+    + (r.asset ? '<br>更新包 ' + esc(r.asset.name) + ' · ' + updFmt(r.asset.size) : '<br><span class="err">该版本未提供本宿主对应的更新包</span>');
+  const notes = document.getElementById('updNotes');
+  if (r.notes) { notes.textContent = r.notes; notes.style.display = ''; }
+  document.getElementById('updDlBtn').style.display = r.asset ? '' : 'none';
+}
+
+async function updDownload() {
+  if (!updLatest || !updLatest.asset) return;
+  const st = document.getElementById('updSt');
+  const btn = document.getElementById('updDlBtn');
+  const wrap = document.getElementById('updPwrap'), bar = document.getElementById('updPbar');
+  btn.disabled = true; wrap.style.display = ''; bar.style.width = '0%';
+  st.textContent = '正在下载…';
+  api.onUpdateProgress(p => {
+    bar.style.width = Math.round((p && p.p || 0) * 100) + '%';
+    st.textContent = '正在下载 ' + updFmt(p && p.got) + ' / ' + ((p && p.total) ? updFmt(p.total) : '…');
+  });
+  let r = null;
+  try { r = await api.updateDownload(updLatest.asset); } catch (e) { r = null; }
+  btn.disabled = false;
+  if (!r || !r.ok) { st.innerHTML = '<span class="err">' + esc((r && r.error) || '下载失败') + '</span>'; bar.style.width = '0%'; return; }
+  bar.style.width = '100%';
+  updZip = r.path;
+  st.innerHTML = '<span class="ok">下载完成，SHA-256 校验通过</span>（' + esc(String(r.sha256 || '').slice(0, 12)) + '…，' + updFmt(r.bytes) + '）'
+    + '<br>点击「重启并完成更新」：软件退出后自动解压覆盖并重新启动，通常 10~60 秒。';
+  document.getElementById('updApplyBtn').style.display = '';
+}
+
+async function updApply() {
+  if (!updZip) return;
+  if (!confirm('即将退出并安装更新。\n\n· 安装期间请勿关机，完成后会自动重新启动\n· 采集记录、知识库、账号配置不受影响（只覆盖程序文件）\n· 若 5 分钟仍未自动启动，请手动双击启动脚本，并查看数据目录 updates\\update.log\n\n继续？')) return;
+  const st = document.getElementById('updSt');
+  st.textContent = '正在准备更新，软件即将退出…';
+  let r = null;
+  try { r = await api.updateApply(updZip); } catch (e) { r = null; }
+  if (!r || !r.ok) { st.innerHTML = '<span class="err">' + esc((r && r.error) || '准备更新失败') + '</span>'; return; }
+  st.innerHTML = '<span class="ok">已启动更新程序，软件即将退出…</span>';
+}
+
+function updOpenPage() { if (updMeta && updMeta.page) api.sysOpenUrl(updMeta.page); }
+
 // ================= 系统设置（基础信息维护） =================
 let sysCfg = null, sysUsers = [];
 function sysShow(el, txt, ok){ if(!el) return; el.textContent = txt || ''; el.style.color = ok ? '#3f7d46' : '#bf3a2f'; }
@@ -3074,6 +3166,9 @@ async function sysInit(){
   await sysReloadUsers();
   sysLogsRefresh();
   mvLoad();
+  // 软件更新：先显示版本，再静默检查一次（失败不打扰，只影响「检查更新」按钮的手动结果）
+  updInit();
+  updCheck(true);
 }
 // ================= 数据搬家（配置全部入库） =================
 function mvFmt(b){ return (b >= 1048576 ? (b/1048576).toFixed(2)+' MB' : Math.max(1, Math.round(b/1024))+' KB'); }

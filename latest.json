@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "publishedAt": "2026-11-18",
+  "notes": "【新增】软件内更新功能：后台「系统设置 → 软件更新」可检查新版本、下载更新包（自动 SHA-256 校验）、退出后自动覆盖安装并重启。\n【改进】更新采用覆盖式安装，只替换程序文件，采集记录 / 知识库 / 账号配置（app\\userdata）保持不动。\n【说明】Electron 版与 .NET 宿主版分别下载对应更新包，两版数据互通，升级后仍可自由切换。",
+  "assets": {
+    "electron": {
+      "name": "qhjf-electron-v0.2.0.zip",
+      "url": "https://github.com/libo770880/qihuang-capture/releases/download/v0.2.0/qhjf-electron-v0.2.0.zip",
+      "size": 404127450,
+      "sha256": "759ff75fa9e94c4a51999a6d36e6192f941e0b57d75b7102a36077a75dd7f609"
+    },
+    "net": {
+      "name": "qhjf-net-v0.2.0.zip",
+      "url": "https://github.com/libo770880/qihuang-capture/releases/download/v0.2.0/qhjf-net-v0.2.0.zip",
+      "size": 320619760,
+      "sha256": "6fbe49b08992a7147a285b5e7882215ed1777b5e3e12849681a9bbe9c6d95258"
+    }
+  }
+}

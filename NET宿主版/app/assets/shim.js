@@ -119,6 +119,12 @@
     seedDemo: function () { return invoke('panel:seedDemo'); },
     clearRecords: function () { return invoke('records:clear'); },
     version: function () { return invoke('app:version'); },
+    // ---------- 软件更新（GitHub Releases） ----------
+    updateInfo: function () { return invoke('update:info'); },
+    updateCheck: function () { return invoke('update:check'); },
+    updateDownload: function (asset) { return invoke('update:download', asset || null); },
+    updateApply: function (zipPath) { return invoke('update:apply', { zipPath: String(zipPath || '') }); },
+    onUpdateProgress: listen('update:progress'),
     onCaptureResult: listen('capture:result'),
     onPanelRefresh: listen('panel:refresh'),
     onCapProgress: listen('cap:progress'),

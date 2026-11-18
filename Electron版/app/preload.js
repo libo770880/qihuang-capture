@@ -50,6 +50,12 @@ contextBridge.exposeInMainWorld('qhjf', {
   seedDemo: () => ipcRenderer.invoke('panel:seedDemo'),
   clearRecords: () => ipcRenderer.invoke('records:clear'),
   version: () => ipcRenderer.invoke('app:version'),
+  // 软件更新（GitHub Releases）
+  updateInfo: () => ipcRenderer.invoke('update:info'),
+  updateCheck: () => ipcRenderer.invoke('update:check'),
+  updateDownload: (asset) => ipcRenderer.invoke('update:download', asset || null),
+  updateApply: (zipPath) => ipcRenderer.invoke('update:apply', { zipPath: String(zipPath || '') }),
+  onUpdateProgress: (cb) => ipcRenderer.on('update:progress', (_e, d) => cb(d)),
   onCaptureResult: (cb) => ipcRenderer.on('capture:result', (_e, d) => cb(d)),
   onPanelRefresh: (cb) => ipcRenderer.on('panel:refresh', (_e) => cb()),
   onCapProgress: (cb) => ipcRenderer.on('cap:progress', (_e, d) => cb(d)),

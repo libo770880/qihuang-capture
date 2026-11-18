@@ -1,7 +1,7 @@
 {
   "name": "qhjf-capture",
   "productName": "岐黄鉴方·悬浮采集助手",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "病历/医嘱悬浮采集工具 —— 面向中医医院的 AI 质控数据入口（第一届山东省中医药创新创业大赛参赛作品）",
   "main": "main.js",
   "author": "岐黄鉴方团队",

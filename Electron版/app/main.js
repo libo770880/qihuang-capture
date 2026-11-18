@@ -92,6 +92,7 @@ const { initUserKb, KIND_HERB, KIND_FORMULA } = require('./lib/userkb');
 const { initClinicalKb, KIND_DIAG, KIND_SX, KIND_WESTMAP } = require('./lib/clinicalkb');
 const { XLSX_TARGETS, xlsxRowsToObjects, buildTemplateWorkbook } = require('./lib/xlsximport');
 const syscfg = require('./lib/syscfg');
+const updater = require('./lib/updater');
 const gbt = require('./lib/gbt');
 const herbcards = require('./lib/herbcards');
 const rxreview = require('./lib/rxreview');
@@ -135,6 +136,9 @@ function logLine(tag, msg) {
 
 // tesseract 阶段日志接入（worker 创建/识别耗时 → app.log，排查"卡住"类问题）
 require('./lib/tess').setLog(m => logLine('tess', m));
+
+// 软件更新：网络/校验/覆盖各阶段写 app.log（update 标签），现场排查"检查更新失败"靠它
+updater.setLog(m => logLine('update', m));
 
 let tray = null;
 let panelWin = null;
@@ -1655,6 +1659,22 @@ function registerIpc() {
   mntClearRecords = clearAllRecords;
   mntSeedDemo = seedDemoRecords;
   ipcMain.handle('app:version', () => app.getVersion());
+  // ---------- 软件更新（GitHub Releases：版本源 latest.json → 下载 zip → 校验 → bat 覆盖重启） ----------
+  ipcMain.handle('update:info', () => updater.info());
+  ipcMain.handle('update:check', () => updater.check());
+  ipcMain.handle('update:download', async (e, asset) => {
+    const r = await updater.download(asset, app.getPath('userData'), (p) => {
+      try { e.sender.send('update:progress', p); } catch (err) { /* 窗口已关 */ }
+    });
+    return r;
+  });
+  ipcMain.handle('update:apply', (e, { zipPath } = {}) => {
+    const r = updater.apply(zipPath, app.getPath('userData'), process.pid);
+    if (!r || !r.ok) return r;
+    // bat 会先等本 PID 消失再动文件，这里延迟退出给它接管时间
+    setTimeout(() => { try { app.quit(); } catch (err) { /* 已在退出 */ } }, 400);
+    return r;
+  });
   // 记录侧栏：置顶 / 患者标注 / 人工复核裁定 —— 白名单字段补丁
   ipcMain.handle('panel:patch', (e, { id, patch } = {}) => {
     if (!id || typeof patch !== 'object' || !patch) return { ok: false, error: '参数无效' };
